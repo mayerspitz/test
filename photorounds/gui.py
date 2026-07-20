@@ -6,13 +6,14 @@ folder inside the chosen project folder.
 
 from __future__ import annotations
 
+import os
 import queue
 import threading
 import traceback
 from pathlib import Path
 
 from . import APP_NAME, __version__, ops
-from .core import rounds, tools
+from .core import helpers_setup, rounds, tools
 from .core.organize import GRANULARITIES
 from .core.resize import FIT_MODES, PRINT_PRESETS, ResizeSpec
 
@@ -70,6 +71,9 @@ class App:
         ttk.Button(runrow, text="Optional components...",
                    command=lambda: messagebox.showinfo("Optional components",
                                                        tools.capability_report())).pack(side="right")
+        self.helpers_btn = ttk.Button(runrow, text="Get missing helpers",
+                                      command=self._install_helpers)
+        self.helpers_btn.pack(side="right", padx=6)
 
         logframe = ttk.LabelFrame(outer, text="Progress", padding=4)
         logframe.pack(fill="both", expand=True, pady=(8, 0))
@@ -79,7 +83,9 @@ class App:
         self._log(f"{APP_NAME} runs entirely on this computer. "
                   "No photo ever leaves your machine.")
         self._log(tools.capability_report())
+        self._sync_helpers_button()
         root.after(120, self._poll_log)
+        root.after(700, self._maybe_offer_helpers)
 
     # ---------- tabs ----------
 
@@ -372,6 +378,61 @@ class App:
             return lambda: ops.run_single(file, dest, to_jpeg=self.single_tojpeg.get(), size=size,
                                           rename_chrono=self.single_chrono.get(), progress=progress)
         return None
+
+    # ---------- helper tools (ExifTool / ffmpeg) ----------
+
+    def _sync_helpers_button(self) -> None:
+        missing = helpers_setup.missing_helpers()
+        if missing and os.name == "nt":
+            self.helpers_btn.configure(state="normal",
+                                       text=f"Get missing helpers ({', '.join(missing)})")
+        else:
+            self.helpers_btn.configure(state="disabled", text="All helpers installed"
+                                       if not missing else "Get missing helpers")
+
+    def _maybe_offer_helpers(self) -> None:
+        """First-launch convenience: offer to fetch ExifTool/ffmpeg automatically."""
+        if os.name != "nt":
+            return
+        missing = helpers_setup.missing_helpers()
+        marker = tools.user_tools_dir() / ".no_auto_prompt"
+        if not missing or marker.exists():
+            return
+        wanted = " and ".join(missing)
+        if messagebox.askyesno(
+                APP_NAME,
+                f"Download the free helper tools now ({wanted})?\n\n"
+                "One-time download from their official sites (ExifTool: better dates "
+                "for RAW & video; ffmpeg: video conversion, ~90 MB).\n\n"
+                "Nothing about your photos is ever sent anywhere."):
+            self._install_helpers()
+        else:
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text("auto prompt declined", encoding="utf-8")
+            self._log("Skipped for now — the 'Get missing helpers' button is there "
+                      "whenever you want it.")
+
+    def _install_helpers(self) -> None:
+        if self.worker and self.worker.is_alive():
+            return
+        self.run_btn.configure(state="disabled")
+        self.helpers_btn.configure(state="disabled", text="Downloading...")
+
+        def work() -> None:
+            try:
+                helpers_setup.install_missing(progress=self.log_queue.put)
+                self.log_queue.put(tools.capability_report())
+            except Exception as exc:
+                self.log_queue.put(f"Helper download failed: {exc}")
+                self.log_queue.put("You can simply try again later (Get missing helpers), "
+                                   "or install manually — see the README. The app keeps "
+                                   "working either way.")
+            finally:
+                self.root.after(0, lambda: (self.run_btn.configure(state="normal"),
+                                            self._sync_helpers_button()))
+
+        self.worker = threading.Thread(target=work, daemon=True)
+        self.worker.start()
 
     def _open_result(self) -> None:
         if self.last_round is None:

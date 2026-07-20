@@ -36,10 +36,31 @@ jobs:
           pip install pytest
           pytest -q
 
+      - name: Bundle ExifTool into the app (best effort)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ver = (Invoke-WebRequest -Uri https://exiftool.org/ver.txt -UseBasicParsing).Content.Trim()
+          Write-Host "ExifTool version: $ver"
+          Invoke-WebRequest -Uri "https://exiftool.org/exiftool-${ver}_64.zip" -OutFile et.zip -UseBasicParsing
+          Expand-Archive et.zip -DestinationPath et
+          $exe = Get-ChildItem -Recurse et -Include "exiftool(-k).exe","exiftool.exe" | Select-Object -First 1
+          if (-not $exe) { throw "exiftool exe not found in archive" }
+          $dest = "packaging/bundled_tools/exiftool"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          Copy-Item -Recurse -Force "$($exe.DirectoryName)\*" $dest
+          if (Test-Path "$dest/exiftool(-k).exe") { Rename-Item "$dest/exiftool(-k).exe" "exiftool.exe" }
+          & "$dest/exiftool.exe" -ver
+
+      - name: Ensure bundled tools folder exists
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path packaging/bundled_tools | Out-Null
+
       - name: Build PhotoRounds.exe
         run: >
           pyinstaller --noconfirm --clean --onefile --windowed --name PhotoRounds
           --collect-all pillow_heif --collect-all rawpy
+          --add-data "packaging/bundled_tools;bundled_tools"
           packaging/app_entry.py
 
       - name: Self-test the frozen executable
@@ -63,8 +84,8 @@ jobs:
           notes="Standalone Windows app — download PhotoRounds.exe below and double-click to run.
           No installation needed. If Windows SmartScreen warns, click 'More info' then 'Run anyway'
           (the file is unsigned, which is normal for personal builds).
-          HEIC and RAW support are built in; install ExifTool and ffmpeg separately for best
-          RAW/video dates and video conversion (see README)."
+          HEIC, RAW and ExifTool support are built in; on first launch the app offers to fetch
+          ffmpeg (video conversion) automatically — one click, no command line."
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" dist/PhotoRounds.exe --clobber
           else

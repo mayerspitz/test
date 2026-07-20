@@ -85,6 +85,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("rounds", help="list rounds in a project").add_argument("--dest", required=True)
     sub.add_parser("tools", help="show which optional components are installed")
+    sub.add_parser("setup-helpers",
+                   help="auto-download ExifTool and ffmpeg (official builds) — no manual steps")
     sub.add_parser("gui", help="open the window app")
     return p
 
@@ -128,6 +130,10 @@ def main(argv: list[str] | None = None) -> int:
             for r in found:
                 _echo(f"  Round {r.number:02d}  {r.operation:10s}  {r.path}")
         elif args.command == "tools":
+            _echo(tools.capability_report())
+        elif args.command == "setup-helpers":
+            from .core import helpers_setup
+            helpers_setup.install_missing(progress=_echo)
             _echo(tools.capability_report())
     except (ValueError, FileExistsError) as exc:
         print(f"Error: {exc}", file=sys.stderr)

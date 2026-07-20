@@ -147,8 +147,11 @@ once you've verified the result.)
 
 ## 3. Privacy guarantees
 
-- **PhotoRounds contains zero network code.** It cannot upload anything; you
-  can run it with Wi-Fi off.
+- **PhotoRounds never sends anything anywhere.** Photo processing has zero
+  network code; you can run every round with Wi-Fi off. The single optional
+  network action is the one-click download of the ExifTool/ffmpeg helper
+  tools from their official sites — it only ever *downloads* those tools, is
+  opt-in, and can be declined forever.
 - No AI, no cloud APIs: duplicate detection is pure math (SHA-256 + a
   perceptual difference hash computed locally), date detection is metadata
   reading, conversion is local pixel processing.

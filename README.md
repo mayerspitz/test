@@ -41,9 +41,9 @@ processing, is in **[STRATEGY.md](STRATEGY.md)**.
    **More info → Run anyway** — the file is unsigned, which is normal for a
    personal build.
 
-HEIC and RAW support are already inside the .exe. For best RAW/video dates
-and video-to-MP4 conversion also install the two free helpers listed under
-"Optional" below.
+HEIC, RAW **and ExifTool** support are already inside the .exe. On first
+launch the app offers to fetch **ffmpeg** (video conversion) by itself — one
+click, no command line, downloaded once from its official site.
 
 ### Option B — one-click install from source
 
@@ -68,15 +68,23 @@ and video-to-MP4 conversion also install the two free helpers listed under
    `[all]` adds HEIC support (`pillow-heif`) and true RAW development
    (`rawpy`). Bare `pip install -e .` needs only Pillow.
 
-### Optional helpers (each unlocks more, everything works without them)
+### Helper tools — installed automatically
 
-- **ExifTool** — best dates for RAW & video + RAW fallback conversion:
-  [exiftool.org](https://exiftool.org), rename to `exiftool.exe`, put it on
-  your PATH.
-- **ffmpeg** — video conversion to MP4: `winget install ffmpeg`.
+Two free helpers unlock extra capability: **ExifTool** (best dates for RAW &
+video, RAW fallback conversion) and **ffmpeg** (video conversion to MP4). You
+don't need to install them yourself:
 
-The app's *Optional components…* button (or `photorounds tools` on the
-command line) shows what's detected.
+- The **.exe already contains ExifTool**.
+- On first launch the app **offers to download whatever is missing** — one
+  click; or press **Get missing helpers** any time (CLI:
+  `photorounds setup-helpers`). Official builds only (exiftool.org,
+  gyan.dev), stored in `%LOCALAPPDATA%\PhotoRounds\tools`, nothing
+  system-wide, and no photo data is ever sent anywhere — this download is the
+  app's only network activity, and it's opt-in.
+
+Everything still works without them (RAW/video are then organized and
+deduplicated but copied through unconverted). The *Optional components…*
+button (or `photorounds tools`) shows what's detected.
 
 ## Use — window app
 
