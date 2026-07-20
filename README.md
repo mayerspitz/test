@@ -28,7 +28,33 @@ processing, is in **[STRATEGY.md](STRATEGY.md)**.
 
 ---
 
-## Install (Windows)
+## Install on Windows
+
+### Option A — download the app (easiest, no Python needed)
+
+1. Open this repository's **Releases** page:
+   `https://github.com/mayerspitz/test/releases` → release **"PhotoRounds for
+   Windows — latest build"** (built automatically by GitHub Actions from this
+   code; also downloadable from any green Actions run under *Artifacts*).
+2. Download **`PhotoRounds.exe`** and put it anywhere (Desktop is fine).
+3. Double-click it. If Windows SmartScreen warns about an unknown app, click
+   **More info → Run anyway** — the file is unsigned, which is normal for a
+   personal build.
+
+HEIC and RAW support are already inside the .exe. For best RAW/video dates
+and video-to-MP4 conversion also install the two free helpers listed under
+"Optional" below.
+
+### Option B — one-click install from source
+
+1. Click the green **Code** button on the repository page → **Download ZIP**,
+   and extract it (or `git clone` it).
+2. Double-click **`install_windows.bat`** in the extracted folder. It checks
+   for Python (pointing you to python.org if missing — tick *"Add python.exe
+   to PATH"* when installing), sets everything up, and puts a **PhotoRounds
+   icon on your Desktop**.
+
+### Option C — manual (for developers)
 
 1. Install Python 3.10+ from [python.org](https://www.python.org/downloads/)
    (tick *"Add python.exe to PATH"*; tkinter for the window app is included).
@@ -42,17 +68,15 @@ processing, is in **[STRATEGY.md](STRATEGY.md)**.
    `[all]` adds HEIC support (`pillow-heif`) and true RAW development
    (`rawpy`). Bare `pip install -e .` needs only Pillow.
 
-3. Optional but recommended (each unlocks more, everything works without them):
-   - **ExifTool** — best dates for RAW & video + RAW fallback conversion:
-     [exiftool.org](https://exiftool.org), rename to `exiftool.exe`, put it on
-     your PATH.
-   - **ffmpeg** — video conversion to MP4: `winget install ffmpeg`.
+### Optional helpers (each unlocks more, everything works without them)
 
-   Check what's detected any time:
+- **ExifTool** — best dates for RAW & video + RAW fallback conversion:
+  [exiftool.org](https://exiftool.org), rename to `exiftool.exe`, put it on
+  your PATH.
+- **ffmpeg** — video conversion to MP4: `winget install ffmpeg`.
 
-   ```bat
-   photorounds tools
-   ```
+The app's *Optional components…* button (or `photorounds tools` on the
+command line) shows what's detected.
 
 ## Use — window app
 

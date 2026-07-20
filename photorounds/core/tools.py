@@ -7,9 +7,17 @@ reports what is missing instead of failing.
 
 from __future__ import annotations
 
+import os
 import shutil
+import subprocess
 from dataclasses import dataclass
 from functools import lru_cache
+
+# Passed to every helper-tool subprocess call so the packaged (windowed) app
+# doesn't flash a console window per ExifTool/ffmpeg invocation.
+SUBPROCESS_KW: dict = (
+    {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
+)
 
 
 @lru_cache(maxsize=None)

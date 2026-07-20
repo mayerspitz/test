@@ -48,7 +48,7 @@ def _copy_exif_with_exiftool(src: Path, dest: Path) -> bool:
         proc = subprocess.run(
             [exe, "-overwrite_original", "-tagsfromfile", str(src),
              "-exif:all", "-icc_profile", str(dest)],
-            capture_output=True, timeout=120)
+            capture_output=True, timeout=120, **tools.SUBPROCESS_KW)
         return proc.returncode == 0
     except Exception:
         return False
@@ -74,7 +74,8 @@ def _extract_raw_jpeg(src: Path, dest: Path) -> bool:
     for tag in ("-JpgFromRaw", "-PreviewImage"):
         try:
             proc = subprocess.run([exe, "-b", tag, str(src)],
-                                  capture_output=True, timeout=180)
+                                  capture_output=True, timeout=180,
+                                  **tools.SUBPROCESS_KW)
             if proc.returncode == 0 and len(proc.stdout) > 50_000:
                 dest.write_bytes(proc.stdout)
                 return True
@@ -154,7 +155,7 @@ def _video_codec(path: Path) -> str | None:
         proc = subprocess.run(
             [exe, "-v", "quiet", "-select_streams", "v:0", "-show_entries",
              "stream=codec_name", "-of", "csv=p=0", str(path)],
-            capture_output=True, text=True, timeout=120)
+            capture_output=True, text=True, timeout=120, **tools.SUBPROCESS_KW)
         return proc.stdout.strip() or None
     except Exception:
         return None
@@ -186,7 +187,7 @@ def video_to_mp4(mf: MediaFile, dest: Path,
              "-c:a", "aac", "-b:a", "192k",
              "-movflags", "+faststart",
              str(dest)],
-            capture_output=True, text=True, timeout=7200)
+            capture_output=True, text=True, timeout=7200, **tools.SUBPROCESS_KW)
         if proc.returncode == 0 and dest.exists() and dest.stat().st_size > 0:
             _stamp_times(dest, capture_dt)
             return ConvertOutcome(dest, "converted", f"{mf.ext} -> .mp4 (H.264/AAC)")

@@ -65,7 +65,8 @@ def _raw_preview_image(path: Path) -> Image.Image | None:
         for tag in ("-JpgFromRaw", "-PreviewImage", "-ThumbnailImage"):
             try:
                 proc = subprocess.run([exe, "-b", tag, str(path)],
-                                      capture_output=True, timeout=120)
+                                      capture_output=True, timeout=120,
+                                      **tools.SUBPROCESS_KW)
                 if proc.returncode == 0 and len(proc.stdout) > 1000:
                     with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tf:
                         tf.write(proc.stdout)

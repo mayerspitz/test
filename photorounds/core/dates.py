@@ -159,7 +159,8 @@ def _exiftool_batch(paths: list[Path]) -> dict[Path, datetime]:
                "-TrackCreateDate", "-GPSDateTime", "-FileModifyDate",
                *[str(p) for p in chunk]]
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600,
+                                  **tools.SUBPROCESS_KW)
             data = json.loads(proc.stdout) if proc.stdout.strip() else []
         except Exception:
             continue
@@ -184,7 +185,7 @@ def _ffprobe_date(path: Path) -> datetime | None:
     try:
         proc = subprocess.run(
             [exe, "-v", "quiet", "-print_format", "json", "-show_format", str(path)],
-            capture_output=True, text=True, timeout=120)
+            capture_output=True, text=True, timeout=120, **tools.SUBPROCESS_KW)
         data = json.loads(proc.stdout)
         raw = (data.get("format", {}).get("tags", {}) or {}).get("creation_time")
         if not raw:
