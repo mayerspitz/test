@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "photorounds"
+version = "1.0.0"
+description = "Offline photo & video consolidation in immutable rounds: organize, dedupe, convert, resize for print. No cloud, no AI."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["Pillow>=10.0"]
+
+[project.optional-dependencies]
+heic = ["pillow-heif>=0.13"]
+raw = ["rawpy>=0.19"]
+all = ["pillow-heif>=0.13", "rawpy>=0.19"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+photorounds = "photorounds.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["photorounds*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
