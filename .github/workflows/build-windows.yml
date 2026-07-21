@@ -50,7 +50,10 @@ jobs:
           $ok = $false
           foreach ($u in $urls) {
             try {
-              Invoke-WebRequest -Uri $u -OutFile et.zip -UseBasicParsing -MaximumRedirection 10
+              # curl.exe (CLI user agent): SourceForge redirects tools straight to
+              # the file but serves browser UAs an HTML interstitial page
+              curl.exe -sSL --fail --max-time 120 -o et.zip "$u"
+              if ($LASTEXITCODE -ne 0) { throw "curl exit code $LASTEXITCODE" }
               $sig = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes("et.zip")[0..1])
               if ($sig -ne "PK") { throw "not a zip file (server sent a web page)" }
               $ok = $true; Write-Host "downloaded from $u"; break
