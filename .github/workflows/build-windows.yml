@@ -43,6 +43,7 @@ jobs:
           $ver = (Invoke-WebRequest -Uri https://exiftool.org/ver.txt -UseBasicParsing).Content.Trim()
           Write-Host "ExifTool version: $ver"
           $urls = @(
+            "https://downloads.sourceforge.net/project/exiftool/exiftool-${ver}_64.zip",
             "https://sourceforge.net/projects/exiftool/files/exiftool-${ver}_64.zip/download",
             "https://exiftool.org/exiftool-${ver}_64.zip"
           )
@@ -50,8 +51,10 @@ jobs:
           foreach ($u in $urls) {
             try {
               Invoke-WebRequest -Uri $u -OutFile et.zip -UseBasicParsing -MaximumRedirection 10
+              $sig = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes("et.zip")[0..1])
+              if ($sig -ne "PK") { throw "not a zip file (server sent a web page)" }
               $ok = $true; Write-Host "downloaded from $u"; break
-            } catch { Write-Host "source failed: $u" }
+            } catch { Write-Host "source failed: $u -- $_" }
           }
           if (-not $ok) { throw "could not download ExifTool from any source" }
           Expand-Archive et.zip -DestinationPath et

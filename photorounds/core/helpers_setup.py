@@ -22,13 +22,19 @@ from pathlib import Path
 from . import tools
 
 EXIFTOOL_VER_URL = "https://exiftool.org/ver.txt"
-# The Windows zip lives on SourceForge (ExifTool's official binary host);
-# exiftool.org kept as fallback in case hosting moves back.
+# ExifTool's binaries live on SourceForge. downloads.sourceforge.net redirects
+# straight to a mirror's file; the /download page URL can serve an HTML
+# interstitial to non-browser clients, so it is only a fallback (each download
+# is zip-validated before use).
 EXIFTOOL_ZIP_URLS = (
+    "https://downloads.sourceforge.net/project/exiftool/exiftool-{ver}_64.zip",
     "https://sourceforge.net/projects/exiftool/files/exiftool-{ver}_64.zip/download",
     "https://exiftool.org/exiftool-{ver}_64.zip",
 )
-FFMPEG_ZIP_URL = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
+FFMPEG_ZIP_URLS = (
+    "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
+    "https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-win64-gpl.zip",
+)
 _UA = {"User-Agent": "PhotoRounds-helper-setup/1.0"}
 
 
@@ -110,6 +116,23 @@ def _install_ffmpeg_from_zip(zip_path: Path, dest_root: Path) -> tuple[Path, Pat
         return ffmpeg, ffprobe
 
 
+def _fetch_zip_from_any(urls: list[str], zpath: Path, progress) -> None:
+    """Download from the first source that yields a real zip file. Some hosts
+    answer HTTP 200 with an HTML page instead of the file — validate."""
+    last_error: Exception | None = None
+    for url in urls:
+        try:
+            _fetch(url, zpath, progress)
+            if not zipfile.is_zipfile(zpath):
+                raise RuntimeError("server returned a web page instead of the zip")
+            progress(f"    downloaded from {url.split('/')[2]}")
+            return
+        except Exception as exc:
+            last_error = exc
+            progress(f"    source unavailable, trying next... ({exc})")
+    raise RuntimeError(f"could not download from any source: {last_error}")
+
+
 def install_exiftool(progress=print) -> Path:
     ver = _http_text(EXIFTOOL_VER_URL).strip()
     progress(f"  ExifTool {ver} (official build)...")
@@ -117,24 +140,17 @@ def install_exiftool(progress=print) -> Path:
     dest_root.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as td:
         zpath = Path(td) / "exiftool.zip"
-        last_error: Exception | None = None
-        for url_pattern in EXIFTOOL_ZIP_URLS:
-            try:
-                _fetch(url_pattern.format(ver=ver), zpath, progress)
-                return _install_exiftool_from_zip(zpath, dest_root)
-            except Exception as exc:
-                last_error = exc
-                progress(f"    source unavailable, trying next... ({exc})")
-        raise RuntimeError(f"could not download ExifTool: {last_error}")
+        _fetch_zip_from_any([u.format(ver=ver) for u in EXIFTOOL_ZIP_URLS], zpath, progress)
+        return _install_exiftool_from_zip(zpath, dest_root)
 
 
 def install_ffmpeg(progress=print) -> tuple[Path, Path]:
-    progress("  ffmpeg 'essentials' build from gyan.dev (about 90 MB)...")
+    progress("  ffmpeg (official build, about 90 MB)...")
     dest_root = tools.user_tools_dir()
     dest_root.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as td:
         zpath = Path(td) / "ffmpeg.zip"
-        _fetch(FFMPEG_ZIP_URL, zpath, progress)
+        _fetch_zip_from_any(list(FFMPEG_ZIP_URLS), zpath, progress)
         return _install_ffmpeg_from_zip(zpath, dest_root)
 
 
