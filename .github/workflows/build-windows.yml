@@ -42,7 +42,18 @@ jobs:
         run: |
           $ver = (Invoke-WebRequest -Uri https://exiftool.org/ver.txt -UseBasicParsing).Content.Trim()
           Write-Host "ExifTool version: $ver"
-          Invoke-WebRequest -Uri "https://exiftool.org/exiftool-${ver}_64.zip" -OutFile et.zip -UseBasicParsing
+          $urls = @(
+            "https://sourceforge.net/projects/exiftool/files/exiftool-${ver}_64.zip/download",
+            "https://exiftool.org/exiftool-${ver}_64.zip"
+          )
+          $ok = $false
+          foreach ($u in $urls) {
+            try {
+              Invoke-WebRequest -Uri $u -OutFile et.zip -UseBasicParsing -MaximumRedirection 10
+              $ok = $true; Write-Host "downloaded from $u"; break
+            } catch { Write-Host "source failed: $u" }
+          }
+          if (-not $ok) { throw "could not download ExifTool from any source" }
           Expand-Archive et.zip -DestinationPath et
           $exe = Get-ChildItem -Recurse et -Include "exiftool(-k).exe","exiftool.exe" | Select-Object -First 1
           if (-not $exe) { throw "exiftool exe not found in archive" }
@@ -62,6 +73,14 @@ jobs:
           --collect-all pillow_heif --collect-all rawpy
           --add-data "packaging/bundled_tools;bundled_tools"
           packaging/app_entry.py
+
+      - name: Report executable size
+        shell: pwsh
+        run: |
+          $size = (Get-Item dist\PhotoRounds.exe).Length
+          Write-Host ("PhotoRounds.exe size: {0:N0} bytes ({1:N1} MB)" -f $size, ($size / 1MB))
+          $bundled = Test-Path packaging/bundled_tools/exiftool/exiftool.exe
+          Write-Host "ExifTool bundled: $bundled"
 
       - name: Self-test the frozen executable
         shell: pwsh
