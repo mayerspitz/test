@@ -22,7 +22,7 @@ model User {
   lastName     String
   email        String  @unique
   phone        String?
-  passwordHash String
+  passwordHash String? // null => Google sign-in only
   roleId       String
   role         Role    @relation(fields: [roleId], references: [id])
   createdAt    DateTime @default(now())

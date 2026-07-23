@@ -12,8 +12,14 @@ services:
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
-        sync: false # paste your Neon connection string in the Render dashboard
+        sync: false # paste your Postgres connection string (Neon or Render Postgres) in the dashboard
       - key: SESSION_SECRET
         generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false # from Google Cloud Console OAuth client
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: APP_URL
+        sync: false # your Render URL, e.g. https://shivtei-yisroel-crm.onrender.com
       - key: NODE_VERSION
         value: "20"

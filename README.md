@@ -10,10 +10,11 @@ Built from the original Moqups BA designs (see `docs/mockups/` for all 50 screen
 
 ## Stack
 
-- **Next.js 14** (App Router, server actions) + Tailwind CSS
-- **Prisma** ORM → **Neon** Postgres
+- **Next.js 14** (App Router, server actions) + Tailwind CSS + lucide-react icons
+- **Prisma** ORM → **Postgres** (Neon, Render Postgres, or any Postgres)
 - **Render** web service (see `render.yaml`)
-- Cookie-session auth (HMAC), bcrypt password hashing
+- **Google sign-in** (staff-only: the Google account's email must exist in Users) with
+  email+password fallback; HMAC cookie sessions
 
 ## Local development
 
@@ -30,12 +31,18 @@ Login with the seeded admin: `admin@shivteiyisroel.org` / `ChangeMe!2026`
 
 ## Deploy (Render + Neon)
 
-1. Create a **Neon** project → copy the Prisma connection string.
+1. Create a **Neon** project (or a Render Postgres) → copy the connection string.
 2. In **Render**: New → Blueprint → point at this repo (`render.yaml` is picked up),
    or create a Web Service manually with build `npm ci && npm run build` and start
    `npx prisma db push && npx tsx prisma/seed.ts && npm run start`.
-3. Set env vars: `DATABASE_URL` (Neon), `SESSION_SECRET` (any long random string).
-4. First boot pushes the schema and seeds defaults; `/api/health` is the health check.
+3. Set env vars: `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`,
+   `GOOGLE_CLIENT_SECRET`, `APP_URL` (your Render URL).
+4. **Google OAuth setup**: Google Cloud Console → APIs & Services → Credentials →
+   Create OAuth client ID (Web application) → add Authorized redirect URI
+   `https://<your-app>/api/auth/google/callback`. Only Google accounts whose email
+   exists in Settings → Users can sign in (add users with an empty password for
+   Google-only access).
+5. First boot pushes the schema and seeds defaults; `/api/health` is the health check.
 
 ## Configuration philosophy
 

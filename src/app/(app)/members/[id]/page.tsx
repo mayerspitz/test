@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FileText } from "lucide-react";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +69,12 @@ export default async function MemberDetail({ params }: { params: { id: string } 
             <div className="card-title">Documents</div>
             <div className="p-4 text-sm">
               {docs.length === 0 && <p className="text-slate-500">No documents.</p>}
-              {docs.map((d) => <p key={d.id}>📄 {d.title} <span className="text-slate-500 text-xs">{d.dateUploaded.toLocaleDateString()}</span></p>)}
+              {docs.map((d) => (
+                <p key={d.id} className="flex items-center gap-2">
+                  <FileText size={15} className="text-blue-600 shrink-0" />
+                  {d.title} <span className="text-slate-500 text-xs">{d.dateUploaded.toLocaleDateString()}</span>
+                </p>
+              ))}
             </div>
           </section>
         </div>

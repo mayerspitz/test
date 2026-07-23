@@ -9,12 +9,14 @@ async function addUser(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const roleId = String(formData.get("roleId") ?? "");
-  if (!email || !password || !roleId) return;
+  if (!email || !roleId) return;
   await db.user.create({ data: {
     firstName: String(formData.get("firstName") ?? "").trim(),
     lastName: String(formData.get("lastName") ?? "").trim(),
     email, phone: String(formData.get("phone") ?? "").trim() || null,
-    passwordHash: await bcrypt.hash(password, 10), roleId,
+    // Password optional: leave empty for Google-sign-in-only users.
+    passwordHash: password ? await bcrypt.hash(password, 10) : null,
+    roleId,
   } });
   revalidatePath("/settings/users");
 }
@@ -55,7 +57,7 @@ export default async function UsersPage() {
           <input name="lastName" required placeholder="Last Name" className="field" />
           <input name="email" type="email" required placeholder="Email" className="field" />
           <input name="phone" placeholder="Phone" className="field" />
-          <input name="password" type="password" required placeholder="Password" className="field" />
+          <input name="password" type="password" placeholder="Password (optional — leave empty for Google sign-in only)" className="field" />
           <select name="roleId" required className="field">
             {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
