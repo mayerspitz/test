@@ -1,0 +1,363 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth & Access ────────────────────────────────────────────────────────────
+
+model Role {
+  id          String  @id @default(cuid())
+  name        String  @unique // Admin, Office Director, Secretary
+  permissions Json    // { addMembers, addUnits, makePayments, cancelUnits, addLoan, changeFeeSettings, addUsers, viewPaymentInfo, addNote, ... }
+  users       User[]
+}
+
+model User {
+  id           String  @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String  @unique
+  phone        String?
+  passwordHash String
+  roleId       String
+  role         Role    @relation(fields: [roleId], references: [id])
+  createdAt    DateTime @default(now())
+  historyLogs  HistoryLog[]
+}
+
+// ─── Configuration (everything variable lives here) ──────────────────────────
+
+model ConfigItem {
+  key         String   @id // e.g. "units.maxPerChild"
+  group       String   // Units & Membership | Fees | Returned Payments | Plans Defaults | Payments & Schedules | Lists & Labels
+  label       String
+  description String?
+  type        String   // int | decimal | percent | money | text | select | list | bool
+  value       Json
+  options     Json?    // for select types
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── Core domain ──────────────────────────────────────────────────────────────
+
+model Member {
+  id           String    @id @default(cuid())
+  memberNo     Int       @unique // e.g. 125
+  firstName    String
+  lastName     String
+  hebrewName   String?
+  label        String?   // e.g. "Very Reliable"
+  address      String?
+  aptUnit      String?
+  city         String?
+  state        String?
+  zip          String?
+  kehila       String?
+  bhmd         String?
+  ruvDayan     String?
+  occupation   String?
+  memberSince  DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  children     Child[]
+  borrowersPaying Borrower[] @relation("PayerMember")
+  contacts     ContactPoint[]
+  oldInfo      OldInfoEntry[]
+}
+
+// Phones & emails with label / primary / note — shared shape across entities
+model ContactPoint {
+  id        String  @id @default(cuid())
+  kind      String  // phone | email
+  label     String? // Cell 1, Home, Work...
+  name      String? // display name for emails
+  value     String
+  isPrimary Boolean @default(false)
+  note      String? // "Please don't call after 5:00pm"
+  memberId     String?
+  member       Member?     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  borrowerId   String?
+  borrower     Borrower?   @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  coBorrowerId String?
+  coBorrower   CoBorrower? @relation(fields: [coBorrowerId], references: [id], onDelete: Cascade)
+  potentialId  String?
+  potential    PotentialMember? @relation(fields: [potentialId], references: [id], onDelete: Cascade)
+}
+
+// "Old Info" — audit of changed address/phone with date entered/changed
+model OldInfoEntry {
+  id          String   @id @default(cuid())
+  memberId    String
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  field       String   // Address | Phone | ...
+  value       String
+  dateEntered DateTime
+  dateChanged DateTime
+}
+
+model Child {
+  id                String    @id @default(cuid())
+  memberId          String
+  member            Member    @relation(fields: [memberId], references: [id])
+  letter            String    // A, B, C... => childNo = `${memberNo}${letter}`
+  name              String
+  hebrewName        String?
+  dateOfBirth       DateTime?
+  status            String    @default("Paying") // Paying | Creditted | ...
+  paidBy            String    @default("Member") // Member | Borrower | Other
+  dateSubscribed    DateTime?
+  scheduledPayOffDate DateTime?
+  scheduledLoanDate DateTime?
+  units             Unit[]
+  borrower          Borrower?
+  @@unique([memberId, letter])
+}
+
+model Plan {
+  id                   String  @id @default(cuid())
+  code                 String  @unique // "1", "F2", "C"...
+  title                String  // "Regular", "13 and Older, 5 Years"
+  membershipTotal      Decimal @db.Decimal(12, 2) // 1250
+  membershipMonths     Int     // 50
+  membershipPerMonth   Decimal @db.Decimal(12, 2) // 25
+  membershipLastMonth  Decimal? @db.Decimal(12, 2) // 30 (optional differing last month)
+  loanAmount           Decimal @db.Decimal(12, 2) // 10000
+  loanMonths           Int     // 60
+  loanPerMonth         Decimal @db.Decimal(12, 2) // 150
+  potentialCredit      Decimal @db.Decimal(12, 2) // 600
+  potentialCreditMonths Int    @default(4) // last N months
+  active               Boolean @default(true)
+  units                Unit[]
+}
+
+// A unit = one membership savings slot on a child (max per child is config: units.maxPerChild)
+model Unit {
+  id                String    @id @default(cuid())
+  childId           String
+  child             Child     @relation(fields: [childId], references: [id])
+  seq               Int       // 1..maxPerChild => unitId = `${memberNo}${letter}${seq}`
+  planId            String
+  plan              Plan      @relation(fields: [planId], references: [id])
+  membershipAmount  Decimal   @db.Decimal(12, 2)
+  paid              Decimal   @default(0) @db.Decimal(12, 2)
+  monthlyMembership Decimal   @db.Decimal(12, 2)
+  overdue           Decimal   @default(0) @db.Decimal(12, 2)
+  status            String    @default("Paying")
+  dateSubscribed    DateTime?
+  scheduledPayOffDate DateTime?
+  scheduledLoanDate DateTime?
+  loan              Loan?
+  @@unique([childId, seq])
+}
+
+model Borrower {
+  id            String   @id @default(cuid())
+  borrowerNo    String   @unique // e.g. "B125A"
+  childId       String?  @unique
+  child         Child?   @relation(fields: [childId], references: [id])
+  firstName     String
+  lastName      String
+  hebrewName    String?
+  label         String?
+  address       String?
+  aptUnit       String?
+  city          String?
+  state         String?
+  zip           String?
+  occupation    String?
+  spouseName    String?
+  spouseOccupation String?
+  payerType     String   @default("Member") // Member | Borrower | Other
+  payerMemberId String?
+  payerMember   Member?  @relation("PayerMember", fields: [payerMemberId], references: [id])
+  payerOtherName String?
+  dateCreated   DateTime @default(now())
+  loans         Loan[]
+  contacts      ContactPoint[]
+}
+
+model Loan {
+  id               String    @id @default(cuid())
+  loanNo           String    @unique // e.g. "B125A1"
+  unitId           String    @unique
+  unit             Unit      @relation(fields: [unitId], references: [id])
+  borrowerId       String
+  borrower         Borrower  @relation(fields: [borrowerId], references: [id])
+  loanDate         DateTime
+  amount           Decimal   @db.Decimal(12, 2)
+  firstPaymentDate DateTime? // editable only before payments applied
+  monthlyPayment   Decimal   @db.Decimal(12, 2)
+  amountPaid       Decimal   @default(0) @db.Decimal(12, 2)
+  monthsPaid       Int       @default(0)
+  overdue          Decimal   @default(0) @db.Decimal(12, 2)
+  potentialCredit  Decimal   @default(0) @db.Decimal(12, 2)
+  creditEnabled    Boolean   @default(true)
+  coBorrowers      LoanCoBorrower[]
+}
+
+model CoBorrower {
+  id           String  @id @default(cuid())
+  coNo         String  @unique // e.g. "CB12"
+  firstName    String
+  lastName     String
+  hebrewName   String?
+  label        String?
+  address      String?
+  aptUnit      String?
+  city         String?
+  state        String?
+  zip          String?
+  businessAddress String?
+  occupation   String?
+  kehila       String?
+  bhmd         String?
+  fathersName  String?
+  fatherInLaw  String?
+  approvedBy   String?
+  status       String?
+  activelyPaying Boolean @default(false)
+  createdAt    DateTime @default(now())
+  loans        LoanCoBorrower[]
+  contacts     ContactPoint[]
+}
+
+model LoanCoBorrower {
+  loanId             String
+  loan               Loan       @relation(fields: [loanId], references: [id])
+  coBorrowerId       String
+  coBorrower         CoBorrower @relation(fields: [coBorrowerId], references: [id])
+  paidByCoBorrower   Decimal    @default(0) @db.Decimal(12, 2)
+  @@id([loanId, coBorrowerId])
+}
+
+// ─── Leads pipeline ───────────────────────────────────────────────────────────
+
+model PotentialMember {
+  id            String   @id @default(cuid())
+  callerIdName  String?
+  callerIdNumber String?
+  firstName     String?
+  lastName      String?
+  hebrewName    String?
+  label         String?
+  address       String?
+  aptUnit       String?
+  city          String?
+  state         String?
+  zip           String?
+  kehila        String?
+  bhmd          String?
+  occupation    String?
+  ruvDayan      String?
+  status        String   @default("Active") // Active | Cancelled
+  createdOn     DateTime @default(now())
+  followUpDate  DateTime?
+  calls         CallLog[]
+  contacts      ContactPoint[]
+}
+
+model CallLog {
+  id          String   @id @default(cuid())
+  potentialId String
+  potential   PotentialMember @relation(fields: [potentialId], references: [id], onDelete: Cascade)
+  date        DateTime
+  subject     String   // "Discuss gemach's goal and plans"
+  details     String?
+  kind        String   @default("scheduled") // scheduled | history
+  outcome     String?  // discussed | rescheduled | canceled
+  rescheduledTo DateTime?
+}
+
+// ─── Payments ────────────────────────────────────────────────────────────────
+
+model PaymentMethod {
+  id         String  @id @default(cuid())
+  ownerType  String  // member | borrower | coborrower
+  ownerId    String
+  nickname   String  // "Chase - Business"
+  kind       String  // card | ach
+  last4      String
+  exp        String? // MM/YY for cards
+  ownerLabel String? // "Member"
+  schedules  PaymentSchedule[]
+  @@index([ownerType, ownerId])
+}
+
+model PaymentSchedule {
+  id              String   @id @default(cuid())
+  ownerType       String   // member | borrower | coborrower
+  ownerId         String
+  category        String   // membership | loan | credit | other
+  scheduleType    String   // system-every-nth | biweekly | every-2nd-year | one-time
+  dayOfMonth      Int?     // for system-every-nth (config default 5)
+  weekday         String?  // for biweekly, e.g. "Tuesday"
+  amount          Decimal  @db.Decimal(12, 2)
+  nextPaymentDate DateTime?
+  paymentMethodId String?
+  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  towards         String?  // "$25 Membership", "Credit Toward End", "Loan Payment"
+  isDefault       Boolean  @default(false)
+  isSystem        Boolean  @default(false)
+  active          Boolean  @default(true)
+  transactions    Transaction[]
+  @@index([ownerType, ownerId])
+}
+
+model Transaction {
+  id         String   @id @default(cuid())
+  ownerType  String
+  ownerId    String
+  dateTime   DateTime @default(now())
+  amount     Decimal  @db.Decimal(12, 2)
+  towards    String
+  status     String   // scheduled | pending | completed | declined | refunded
+  scheduleId String?
+  schedule   PaymentSchedule? @relation(fields: [scheduleId], references: [id])
+  @@index([ownerType, ownerId])
+}
+
+// Credit accounts: prepaid amounts to apply toward monthly or end of membership/loan
+model CreditAccount {
+  id            String  @id @default(cuid())
+  ownerType     String
+  ownerId       String
+  towardMonthly Decimal @default(0) @db.Decimal(12, 2)
+  towardEnd     Decimal @default(0) @db.Decimal(12, 2)
+  @@unique([ownerType, ownerId])
+}
+
+// ─── Cross-cutting ────────────────────────────────────────────────────────────
+
+model Note {
+  id        String   @id @default(cuid())
+  ownerType String   // member | child | borrower | coborrower | potential | unit | loan
+  ownerId   String
+  date      DateTime @default(now())
+  text      String
+  @@index([ownerType, ownerId])
+}
+
+model HistoryLog {
+  id        String   @id @default(cuid())
+  ownerType String
+  ownerId   String
+  category  String   // Payments | Contact | Other
+  date      DateTime @default(now())
+  details   String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  @@index([ownerType, ownerId])
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  ownerType    String   // member | borrower | ...
+  ownerId      String
+  title        String
+  fileUrl      String?
+  dateUploaded DateTime @default(now())
+  @@index([ownerType, ownerId])
+}

@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shivtei Yisroel — Loans CRM
 
-## Getting Started
+Back-office CRM for **Gemach Shivtei Yisroel**: members, children & units (membership savings),
+borrowers & loans, co-borrowers, potential-member pipeline, payments, and a fully
+configurable settings system.
 
-First, run the development server:
+Built from the original Moqups BA designs (see `docs/mockups/` for all 50 screens and
+`docs/SPECS.md` for the extracted functional spec). Open clarification items are tracked in
+`docs/QUESTIONS.md` — **review before building further features**.
+
+## Stack
+
+- **Next.js 14** (App Router, server actions) + Tailwind CSS
+- **Prisma** ORM → **Neon** Postgres
+- **Render** web service (see `render.yaml`)
+- Cookie-session auth (HMAC), bcrypt password hashing
+
+## Local development
 
 ```bash
+npm install
+cp .env.example .env        # fill in DATABASE_URL (Neon) + SESSION_SECRET
+npx prisma db push          # create schema
+npm run db:seed             # seed config, roles, admin user, demo data
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Login with the seeded admin: `admin@shivteiyisroel.org` / `ChangeMe!2026`
+(change this immediately in Settings → Users).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy (Render + Neon)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a **Neon** project → copy the Prisma connection string.
+2. In **Render**: New → Blueprint → point at this repo (`render.yaml` is picked up),
+   or create a Web Service manually with build `npm ci && npm run build` and start
+   `npx prisma db push && npx tsx prisma/seed.ts && npm run start`.
+3. Set env vars: `DATABASE_URL` (Neon), `SESSION_SECRET` (any long random string).
+4. First boot pushes the schema and seeds defaults; `/api/health` is the health check.
 
-## Learn More
+## Configuration philosophy
 
-To learn more about Next.js, take a look at the following resources:
+**Every business variable is data, not code** — stored in the `ConfigItem` table and editable
+under **Settings → Configuration**, organized by group:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Units & Membership (e.g. `units.maxPerChild` = **6**, membership fee $25 / every 2 years)
+- Fees (CC/ACH processing 3%, cancelled-unit $35, dispute $35)
+- Returned Payments (retry period/tries and fee rules per CC/ACH)
+- Plan Defaults (membership $1250/50mo/$25, loan $10,000/60mo/$150, credit $600 last 4 mo)
+- Payments & Schedules (system schedule day = 5th, upcoming window 30 days)
+- Lists & Labels (member labels, history categories, phone labels, alert types)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Code reads values via `getConfig(key, fallback)` — never hardcode a business number.
 
-## Deploy on Vercel
+## Repository layout
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+prisma/schema.prisma   # full domain model
+prisma/seed.ts         # config catalog + roles + admin + demo family (mirrors mockups)
+src/app/(app)/         # authenticated app: dashboard, members, children, borrowers,
+                       # co-borrowers, potential-members, payments, settings, search
+src/lib/               # db client, auth, config helpers
+docs/SPECS.md          # extracted functional spec (all 50 mockup pages)
+docs/QUESTIONS.md      # open clarification questions — answer before deep build-out
+docs/mockups/          # PNG of every Moqups page
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Status
+
+This is the **initial scaffold**: schema, auth, seeded demo data, list/detail screens for all
+core entities, payments views, and the working Configuration page. Write flows beyond
+member/potential/user creation (payments processing, unit/loan issuance, document upload)
+are intentionally deferred until the clarification round — see `docs/QUESTIONS.md`.

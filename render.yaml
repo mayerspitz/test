@@ -1,0 +1,19 @@
+# Render Blueprint — Shivtei Yisroel CRM
+# Prereq: create a Neon Postgres database and set DATABASE_URL in the Render dashboard
+# (Neon connection string, with ?sslmode=require).
+services:
+  - type: web
+    name: shivtei-yisroel-crm
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    # First deploy pushes the schema and seeds config + demo data, then starts.
+    startCommand: npx prisma db push && npx tsx prisma/seed.ts && npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false # paste your Neon connection string in the Render dashboard
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: NODE_VERSION
+        value: "20"
