@@ -1,7 +1,7 @@
 import { buildReport, monthDay, slotsInRange, type Report, type Units } from '@windwise/shared';
 import { z } from 'zod';
 import { UpstreamError, type AccuWeatherClient } from './accuweather/client';
-import { TIERS, type Capabilities } from './config/tiers';
+import { DAILY_WINDOWS, TIERS, type Capabilities } from './config/tiers';
 
 const Stamp = z
   .string()
@@ -22,19 +22,38 @@ export class BadRequestError extends Error {
   readonly statusCode = 400;
 }
 
+/** True when AccuWeather refused because the key's plan does not cover the endpoint. */
+function isPlanRefusal(err: unknown): boolean {
+  return err instanceof UpstreamError && (err.upstreamStatus === 401 || err.upstreamStatus === 403);
+}
+
 /** Optional data (hourly, alerts) the plan doesn't include is skipped, not fatal. */
 async function optional<T>(load: () => Promise<T>): Promise<T | null> {
   try {
     return await load();
   } catch (err) {
-    if (
-      err instanceof UpstreamError &&
-      (err.upstreamStatus === 401 || err.upstreamStatus === 403)
-    ) {
-      return null;
-    }
+    if (isPlanRefusal(err)) return null;
     throw err;
   }
+}
+
+/**
+ * Daily forecast is the one call the report cannot do without, so a plan narrower than
+ * ACCUWEATHER_TIER claims must not be fatal: step down the published windows until one is allowed.
+ * Only a plan refusal (401/403) steps down; every other failure surfaces. See docs/DECISIONS.md #D-22.
+ */
+async function loadDaily(client: AccuWeatherClient, key: string, maxDays: number) {
+  const windows = DAILY_WINDOWS.filter((d) => d <= maxDays);
+  let lastErr: unknown;
+  for (const days of windows) {
+    try {
+      return await client.getDaily(key, days);
+    } catch (err) {
+      if (!isPlanRefusal(err)) throw err;
+      lastErr = err;
+    }
+  }
+  throw lastErr ?? new UpstreamError(502, 'AccuWeather returned no daily forecast.');
 }
 
 export async function createReport(
@@ -50,7 +69,7 @@ export async function createReport(
 
   const [location, daily] = await Promise.all([
     client.getLocation(body.locationKey),
-    client.getDaily(body.locationKey, caps.maxDailyDays),
+    loadDaily(client, body.locationKey, caps.maxDailyDays),
   ]);
   const dates = daily.DailyForecasts.map((f) => f.Date.slice(0, 10));
   const first = dates[0];

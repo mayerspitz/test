@@ -8,6 +8,8 @@ export type MockUpstream = {
   hits: string[];
   /** When set, every request fails with this HTTP status. */
   failWith: number | null;
+  /** When set, daily windows wider than this are refused with 401, as a narrower plan would. */
+  maxDailyDays: number | null;
   close(): Promise<void>;
 };
 
@@ -15,7 +17,11 @@ export async function startMockAccuWeather(
   opts: { apiKey?: string; port?: number } = {},
 ): Promise<MockUpstream> {
   const apiKey = opts.apiKey ?? 'test-key';
-  const state: Pick<MockUpstream, 'hits' | 'failWith'> = { hits: [], failWith: null };
+  const state: Pick<MockUpstream, 'hits' | 'failWith' | 'maxDailyDays'> = {
+    hits: [],
+    failWith: null,
+    maxDailyDays: null,
+  };
 
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://mock');
@@ -41,7 +47,11 @@ export async function startMockAccuWeather(
       return send(200, q === '11201' ? [MOCK_LOCATION] : []);
     if (p === `/locations/v1/${MOCK_KEY}`) return send(200, MOCK_LOCATION);
     if ((m = p.match(/^\/forecasts\/v1\/daily\/(\d+)day\/(.+)$/)) && m[2] === MOCK_KEY) {
-      return send(200, mockDaily(now, Number(m[1])));
+      const days = Number(m[1]);
+      if (state.maxDailyDays !== null && days > state.maxDailyDays) {
+        return send(401, { Code: 'Unauthorized', Message: 'Plan does not include this window' });
+      }
+      return send(200, mockDaily(now, days));
     }
     if ((m = p.match(/^\/forecasts\/v1\/hourly\/(\d+)hour\/(.+)$/)) && m[2] === MOCK_KEY) {
       return send(200, mockHourly(now, Number(m[1])));

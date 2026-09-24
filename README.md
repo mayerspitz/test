@@ -4,6 +4,17 @@ Enter any location and a date/period range. WindWise pulls AccuWeather forecasts
 
 > **Standalone branch.** This branch has its own history (no shared commits with `main`) and is never merged. It is deployed on its own to Render.
 
+## Documentation
+
+| File                                           | Read it for                                                                  |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- |
+| [`docs/STATE.md`](docs/STATE.md)               | **Start here.** Where the project stands, what is verified, what is next     |
+| [`AGENTS.md`](AGENTS.md)                       | The working rules — owner rules, documentation rules, secrets, code, deploys |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md)       | Every decision and the reasoning behind it                                   |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How the code is laid out and why                                             |
+| [`docs/OPERATIONS.md`](docs/OPERATIONS.md)     | Render, environment variables, plan tiers, key rotation                      |
+| [`docs/HANDOFF.md`](docs/HANDOFF.md)           | The owner's original spec, verbatim                                          |
+
 ## Quick start
 
 ```bash
@@ -30,26 +41,29 @@ Requires Node 22.12+ and pnpm 10.
 
 Source: AccuWeather's Core Weather packages page, checked Sep 24, 2026. Set `ACCUWEATHER_TIER` to your plan. The mapping is in `apps/server/src/config/tiers.ts`.
 
-| Tier                  | Price   | Calls      | Daily forecast | Hourly          | Alerts | Report periods                                                         |
-| --------------------- | ------- | ---------- | -------------- | --------------- | ------ | ---------------------------------------------------------------------- |
-| `free` (14-day trial) | $0      | 500/day    | 5 days         | 12 h (not used) | —      | Day / Night                                                            |
-| `starter`             | $2/mo   | 15,000/mo  | 5 days         | 12 h (not used) | —      | Day / Night                                                            |
-| `standard`            | $25/mo  | 225,000/mo | 5 days         | 12 h (not used) | —      | Day / Night                                                            |
-| `prime`               | $250/mo | 1.8M/mo    | 10 days        | 72 h            | Yes    | Morning / Afternoon / Evening / Overnight, then Day / Night past 72 h  |
-| `elite`               | $500/mo | 2.4M/mo    | 15 days        | 120 h           | Yes    | Morning / Afternoon / Evening / Overnight, then Day / Night past 120 h |
+| Tier             | Price   | Calls      | Daily forecast | Hourly          | Alerts | Report periods                                                         |
+| ---------------- | ------- | ---------- | -------------- | --------------- | ------ | ---------------------------------------------------------------------- |
+| `free`           | $0      | —          | 5 days         | 12 h (not used) | —      | Day / Night (the safe floor, and the default)                          |
+| `trial` (14-day) | $0      | 500/day    | 15 days        | 120 h           | Yes    | Morning / Afternoon / Evening / Overnight                              |
+| `starter`        | $2/mo   | 15,000/mo  | 5 days         | 12 h (not used) | —      | Day / Night                                                            |
+| `standard`       | $25/mo  | 225,000/mo | 5 days         | 12 h (not used) | —      | Day / Night                                                            |
+| `prime`          | $250/mo | 1.8M/mo    | 10 days        | 72 h            | Yes    | Morning / Afternoon / Evening / Overnight, then Day / Night past 72 h  |
+| `elite`          | $500/mo | 2.4M/mo    | 15 days        | 120 h           | Yes    | Morning / Afternoon / Evening / Overnight, then Day / Night past 120 h |
 
-The free trial is mapped to Starter limits (the plan it converts to). One report costs up to 4 calls (location, daily, hourly, alerts); repeat requests are served from cache.
+AccuWeather's portal describes the 14-day trial as full **Elite**-level Core Weather at 500 calls/day, so `trial` maps to Elite capabilities (see `docs/DECISIONS.md` D-21). `free` is kept as the conservative floor and is the default. If the configured tier claims more than the key allows, the daily request steps down through narrower windows instead of failing (D-22).
+
+One report costs up to 4 calls (location, daily, hourly, alerts); repeat requests are served from cache.
 
 ## Configuration
 
-| Variable                | Default                 | Notes                                           |
-| ----------------------- | ----------------------- | ----------------------------------------------- |
-| `ACCUWEATHER_API_KEY`   | —                       | Required for reports                            |
-| `ACCUWEATHER_AUTH_MODE` | `query`                 | `query` or `bearer`                             |
-| `ACCUWEATHER_TIER`      | `free`                  | `free`, `starter`, `standard`, `prime`, `elite` |
-| `PORT`                  | `8787`                  | Render sets this                                |
-| `WEB_ORIGIN`            | `http://localhost:5173` | Only origin allowed by CORS                     |
-| `DEFAULT_UNITS`         | `imperial`              | `imperial` or `metric`                          |
+| Variable                | Default                 | Notes                                                    |
+| ----------------------- | ----------------------- | -------------------------------------------------------- |
+| `ACCUWEATHER_API_KEY`   | —                       | Required for reports                                     |
+| `ACCUWEATHER_AUTH_MODE` | `query`                 | `query` or `bearer`                                      |
+| `ACCUWEATHER_TIER`      | `free`                  | `free`, `trial`, `starter`, `standard`, `prime`, `elite` |
+| `PORT`                  | `8787`                  | Render sets this                                         |
+| `WEB_ORIGIN`            | `http://localhost:5173` | Only origin allowed by CORS                              |
+| `DEFAULT_UNITS`         | `imperial`              | `imperial` or `metric`                                   |
 
 ## Scripts
 
@@ -100,12 +114,6 @@ packages/shared    Period builder, wind rules engine, buildReport, formatters, P
 
 ## Owner decisions needed
 
-| #   | Item                                                                                                                                                            | Current behavior                                                                                                |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| 1   | Which AccuWeather plan?                                                                                                                                         | `free`: Day/Night rows, 5 days, no alerts. Prime or higher gives Morning/Afternoon/Evening/Overnight and alerts |
-| 2   | Backyard wording for Breezy, Gale, Storm                                                                                                                        | Drafted in `wind-rules.json` with `"approved": false`. Those tiers show the summary line only until approved    |
-| 3   | Sukkah row year-round, or only during Sukkot?                                                                                                                   | Year-round, as approved                                                                                         |
-| 4   | Domain                                                                                                                                                          | Render's `onrender.com` URL                                                                                     |
-| 5   | Fri AM row in the approved sample reads "Rising to upper 60s" / "Low". Those were hand-written; the handoff's period rules produce numbers (`68° (66°)`, `10%`) | Numbers, per the period rules. The other 8 rows match the approved table exactly                                |
-| 6   | Rain hours `(~N hrs)`                                                                                                                                           | Shown on Day/Night rows only, as in the approved table                                                          |
-| 7   | Backyard column headers                                                                                                                                         | Sustained rounded to the nearest 5 mph ("At 20 mph"); gusts shown as a 5 mph band ("At 35–40 mph")              |
+Seven open questions, each with a default already shipping, are tracked in
+[`docs/STATE.md`](docs/STATE.md#open-questions-for-the-owner) with the reasoning in
+[`docs/DECISIONS.md`](docs/DECISIONS.md). Nothing is blocked on them.

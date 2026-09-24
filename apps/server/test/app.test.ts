@@ -13,6 +13,7 @@ beforeAll(async () => {
 afterAll(() => upstream.close());
 afterEach(() => {
   upstream.failWith = null;
+  upstream.maxDailyDays = null;
   upstream.hits.length = 0;
 });
 
@@ -248,5 +249,49 @@ describe('rate limit', () => {
     for (let i = 0; i < 60; i++) expect((await a.inject('/api/health')).statusCode).toBe(200);
     const res = await a.inject('/api/health');
     expect(res.statusCode).toBe(429);
+  });
+});
+
+describe('plan capabilities', () => {
+  it('trial reports Elite-level capabilities (500 calls/day, 15-day, 120-hour, alerts)', async () => {
+    const res = await (await app({ ACCUWEATHER_TIER: 'trial' })).inject('/api/capabilities');
+    expect(res.json()).toEqual({
+      tier: 'trial',
+      maxDailyDays: 15,
+      maxHourlyHours: 120,
+      periodsMode: '4-period',
+    });
+  });
+
+  it("steps the daily window down when the key's plan is narrower than the configured tier", async () => {
+    upstream.maxDailyDays = 5;
+    const res = await (
+      await app({ ACCUWEATHER_TIER: 'trial' })
+    ).inject({
+      method: 'POST',
+      url: '/api/report',
+      payload: body(),
+    });
+    expect(res.statusCode).toBe(200);
+    const daily = upstream.hits.filter((h) => h.includes('/forecasts/v1/daily/'));
+    expect(daily).toEqual([
+      `/forecasts/v1/daily/15day/${MOCK_KEY}`,
+      `/forecasts/v1/daily/10day/${MOCK_KEY}`,
+      `/forecasts/v1/daily/5day/${MOCK_KEY}`,
+    ]);
+    expect((res.json() as Report).periods.length).toBeGreaterThan(0);
+  });
+
+  it('does not step down on a non-plan failure', async () => {
+    upstream.failWith = 500;
+    const res = await (
+      await app({ ACCUWEATHER_TIER: 'trial' })
+    ).inject({
+      method: 'POST',
+      url: '/api/report',
+      payload: body(),
+    });
+    expect(res.statusCode).toBe(502);
+    expect(upstream.hits.filter((h) => h.includes('/forecasts/v1/daily/'))).toHaveLength(1);
   });
 });
