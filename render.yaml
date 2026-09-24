@@ -1,0 +1,23 @@
+# Render Blueprint for WindWise (https://render.com/docs/blueprint-spec).
+# Deploys this standalone branch as one Docker web service.
+services:
+  - type: web
+    name: windwise
+    runtime: docker
+    plan: free
+    region: virginia
+    branch: claude/magical-knuth-ufkstw
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: ACCUWEATHER_API_KEY
+        sync: false # set in the Render dashboard; never commit it
+      - key: ACCUWEATHER_AUTH_MODE
+        value: bearer
+      - key: ACCUWEATHER_TIER
+        value: free
+      - key: DEFAULT_UNITS
+        value: imperial
+      - key: WEB_ORIGIN
+        value: https://windwise.onrender.com

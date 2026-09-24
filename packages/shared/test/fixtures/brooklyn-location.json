@@ -1,0 +1,19 @@
+{
+  "Key": "fixture-brooklyn",
+  "LocalizedName": "Brooklyn",
+  "EnglishName": "Brooklyn",
+  "AdministrativeArea": {
+    "ID": "NY",
+    "LocalizedName": "New York"
+  },
+  "Country": {
+    "ID": "US",
+    "LocalizedName": "United States"
+  },
+  "TimeZone": {
+    "Code": "EDT",
+    "Name": "America/New_York",
+    "GmtOffset": -4,
+    "IsDaylightSaving": true
+  }
+}

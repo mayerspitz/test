@@ -1,0 +1,1397 @@
+[
+  {
+    "DateTime": "2026-09-25T06:00:00-04:00",
+    "EpochDateTime": 1790330400,
+    "WeatherIcon": 6,
+    "IconPhrase": "Some sun, clouds building",
+    "HasPrecipitation": false,
+    "IsDaylight": false,
+    "Temperature": {
+      "Value": 60,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 58,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 14,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 28,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 5,
+    "RainProbability": 5,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T07:00:00-04:00",
+    "EpochDateTime": 1790334000,
+    "WeatherIcon": 6,
+    "IconPhrase": "Some sun, clouds building",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 62,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 60,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 16,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 30,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 5,
+    "RainProbability": 5,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T08:00:00-04:00",
+    "EpochDateTime": 1790337600,
+    "WeatherIcon": 6,
+    "IconPhrase": "Some sun, clouds building",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 64,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 62,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 18,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 33,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 7,
+    "RainProbability": 7,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T09:00:00-04:00",
+    "EpochDateTime": 1790341200,
+    "WeatherIcon": 6,
+    "IconPhrase": "Some sun, clouds building",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 66,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 64,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 20,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 35,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 10,
+    "RainProbability": 10,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T10:00:00-04:00",
+    "EpochDateTime": 1790344800,
+    "WeatherIcon": 6,
+    "IconPhrase": "Partly sunny",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 67,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 65,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 20,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NE",
+        "English": "NE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 35,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 10,
+    "RainProbability": 10,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T11:00:00-04:00",
+    "EpochDateTime": 1790348400,
+    "WeatherIcon": 6,
+    "IconPhrase": "Some sun, clouds building",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 68,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 66,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 19,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 34,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 10,
+    "RainProbability": 10,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T12:00:00-04:00",
+    "EpochDateTime": 1790352000,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, windy",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 68,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 67,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 20,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 35,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 15,
+    "RainProbability": 15,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T13:00:00-04:00",
+    "EpochDateTime": 1790355600,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, windy",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 69,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 68,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 20,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 35,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 20,
+    "RainProbability": 20,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T14:00:00-04:00",
+    "EpochDateTime": 1790359200,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, windy",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 69,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 68,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 19,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 33,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 25,
+    "RainProbability": 25,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T15:00:00-04:00",
+    "EpochDateTime": 1790362800,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, windy",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 68,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 66,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 18,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 32,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 25,
+    "RainProbability": 25,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T16:00:00-04:00",
+    "EpochDateTime": 1790366400,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, windy",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 66,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 63,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 17,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "N",
+        "English": "N"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 30,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 20,
+    "RainProbability": 20,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T17:00:00-04:00",
+    "EpochDateTime": 1790370000,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, breezy",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 62,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 56,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 15,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 28,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 30,
+    "RainProbability": 30,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T18:00:00-04:00",
+    "EpochDateTime": 1790373600,
+    "WeatherIcon": 12,
+    "IconPhrase": "Mostly cloudy, breezy, a little rain",
+    "HasPrecipitation": true,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 61,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 55,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 15,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 27,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 55,
+    "RainProbability": 55,
+    "Rain": {
+      "Value": 0.01,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T19:00:00-04:00",
+    "EpochDateTime": 1790377200,
+    "WeatherIcon": 12,
+    "IconPhrase": "Mostly cloudy, breezy, a little rain",
+    "HasPrecipitation": true,
+    "IsDaylight": false,
+    "Temperature": {
+      "Value": 61,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 55,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 14,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 26,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 50,
+    "RainProbability": 50,
+    "Rain": {
+      "Value": 0.01,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T20:00:00-04:00",
+    "EpochDateTime": 1790380800,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, breezy",
+    "HasPrecipitation": false,
+    "IsDaylight": false,
+    "Temperature": {
+      "Value": 60,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 54,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 13,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "N",
+        "English": "N"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 25,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 40,
+    "RainProbability": 40,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-25T21:00:00-04:00",
+    "EpochDateTime": 1790384400,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, breezy",
+    "HasPrecipitation": false,
+    "IsDaylight": false,
+    "Temperature": {
+      "Value": 60,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 54,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 13,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNE",
+        "English": "NNE"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 24,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 40,
+    "RainProbability": 40,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-26T17:00:00-04:00",
+    "EpochDateTime": 1790456400,
+    "WeatherIcon": 12,
+    "IconPhrase": "Windy with periods of rain",
+    "HasPrecipitation": true,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 58,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 47,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 21,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "WNW",
+        "English": "WNW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 32,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 60,
+    "RainProbability": 60,
+    "Rain": {
+      "Value": 0.02,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-26T18:00:00-04:00",
+    "EpochDateTime": 1790460000,
+    "WeatherIcon": 12,
+    "IconPhrase": "Windy with periods of rain",
+    "HasPrecipitation": true,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 58,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 47,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 20,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "WNW",
+        "English": "WNW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 31,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 70,
+    "RainProbability": 70,
+    "Rain": {
+      "Value": 0.03,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-26T19:00:00-04:00",
+    "EpochDateTime": 1790463600,
+    "WeatherIcon": 12,
+    "IconPhrase": "Windy with periods of rain",
+    "HasPrecipitation": true,
+    "IsDaylight": false,
+    "Temperature": {
+      "Value": 57,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 46,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 19,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NW",
+        "English": "NW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 30,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 70,
+    "RainProbability": 70,
+    "Rain": {
+      "Value": 0.03,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-26T20:00:00-04:00",
+    "EpochDateTime": 1790467200,
+    "WeatherIcon": 12,
+    "IconPhrase": "Windy with rain",
+    "HasPrecipitation": true,
+    "IsDaylight": false,
+    "Temperature": {
+      "Value": 57,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 46,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 19,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "WNW",
+        "English": "WNW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 30,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 65,
+    "RainProbability": 65,
+    "Rain": {
+      "Value": 0.02,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-26T21:00:00-04:00",
+    "EpochDateTime": 1790470800,
+    "WeatherIcon": 12,
+    "IconPhrase": "Windy with periods of rain",
+    "HasPrecipitation": true,
+    "IsDaylight": false,
+    "Temperature": {
+      "Value": 57,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 46,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 18,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NW",
+        "English": "NW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 29,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 65,
+    "RainProbability": 65,
+    "Rain": {
+      "Value": 0.02,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-27T12:00:00-04:00",
+    "EpochDateTime": 1790524800,
+    "WeatherIcon": 6,
+    "IconPhrase": "Cloudy, breezy",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 64,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 60,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 15,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNW",
+        "English": "NNW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 28,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 35,
+    "RainProbability": 35,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-27T13:00:00-04:00",
+    "EpochDateTime": 1790528400,
+    "WeatherIcon": 12,
+    "IconPhrase": "Cloudy, breezy, a little rain",
+    "HasPrecipitation": true,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 65,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 61,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 15,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNW",
+        "English": "NNW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 27,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 55,
+    "RainProbability": 55,
+    "Rain": {
+      "Value": 0.01,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-27T14:00:00-04:00",
+    "EpochDateTime": 1790532000,
+    "WeatherIcon": 12,
+    "IconPhrase": "Cloudy, breezy, a little rain",
+    "HasPrecipitation": true,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 66,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 62,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 14,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNW",
+        "English": "NNW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 26,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 50,
+    "RainProbability": 50,
+    "Rain": {
+      "Value": 0.01,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-27T15:00:00-04:00",
+    "EpochDateTime": 1790535600,
+    "WeatherIcon": 6,
+    "IconPhrase": "Cloudy, breezy",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 65,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 61,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 14,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "N",
+        "English": "N"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 25,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 40,
+    "RainProbability": 40,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-27T16:00:00-04:00",
+    "EpochDateTime": 1790539200,
+    "WeatherIcon": 6,
+    "IconPhrase": "Cloudy, breezy",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 64,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 60,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 13,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNW",
+        "English": "NNW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 24,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 35,
+    "RainProbability": 35,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-27T17:00:00-04:00",
+    "EpochDateTime": 1790542800,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, chance of rain",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 60,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 56,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 13,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNW",
+        "English": "NNW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 22,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 30,
+    "RainProbability": 30,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-27T18:00:00-04:00",
+    "EpochDateTime": 1790546400,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, chance of rain",
+    "HasPrecipitation": false,
+    "IsDaylight": true,
+    "Temperature": {
+      "Value": 59,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 55,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 12,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNW",
+        "English": "NNW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 21,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 35,
+    "RainProbability": 35,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-27T19:00:00-04:00",
+    "EpochDateTime": 1790550000,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, chance of rain",
+    "HasPrecipitation": false,
+    "IsDaylight": false,
+    "Temperature": {
+      "Value": 58,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 54,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 12,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "N",
+        "English": "N"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 20,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 35,
+    "RainProbability": 35,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-27T20:00:00-04:00",
+    "EpochDateTime": 1790553600,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy",
+    "HasPrecipitation": false,
+    "IsDaylight": false,
+    "Temperature": {
+      "Value": 58,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 54,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 11,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNW",
+        "English": "NNW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 19,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 30,
+    "RainProbability": 30,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  },
+  {
+    "DateTime": "2026-09-27T21:00:00-04:00",
+    "EpochDateTime": 1790557200,
+    "WeatherIcon": 6,
+    "IconPhrase": "Mostly cloudy, chance of rain",
+    "HasPrecipitation": false,
+    "IsDaylight": false,
+    "Temperature": {
+      "Value": 57,
+      "Unit": "F",
+      "UnitType": 18
+    },
+    "RealFeelTemperature": {
+      "Value": 53,
+      "Unit": "F",
+      "UnitType": 18,
+      "Phrase": "Pleasant"
+    },
+    "Wind": {
+      "Speed": {
+        "Value": 10,
+        "Unit": "mi/h",
+        "UnitType": 9
+      },
+      "Direction": {
+        "Degrees": 0,
+        "Localized": "NNW",
+        "English": "NNW"
+      }
+    },
+    "WindGust": {
+      "Speed": {
+        "Value": 18,
+        "Unit": "mi/h",
+        "UnitType": 9
+      }
+    },
+    "PrecipitationProbability": 25,
+    "RainProbability": 25,
+    "Rain": {
+      "Value": 0,
+      "Unit": "in",
+      "UnitType": 1
+    }
+  }
+]

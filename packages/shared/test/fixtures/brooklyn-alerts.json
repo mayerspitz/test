@@ -1,0 +1,30 @@
+[
+  {
+    "AlertID": 1001,
+    "Description": {
+      "Localized": "Coastal Flood Advisory",
+      "English": "Coastal Flood Advisory"
+    },
+    "Area": [
+      {
+        "Name": "Kings (Brooklyn)",
+        "StartTime": "2026-09-26T18:00:00-04:00",
+        "EndTime": "2026-09-27T06:00:00-04:00"
+      }
+    ]
+  },
+  {
+    "AlertID": 1002,
+    "Description": {
+      "Localized": "Rip Current Statement",
+      "English": "Rip Current Statement"
+    },
+    "Area": [
+      {
+        "Name": "Kings (Brooklyn)",
+        "StartTime": "2026-09-25T06:00:00-04:00",
+        "EndTime": "2026-09-27T20:00:00-04:00"
+      }
+    ]
+  }
+]

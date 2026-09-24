@@ -1,0 +1,208 @@
+{
+  "Headline": {
+    "Text": "Windy with periods of rain Saturday night; breezy Sunday ",
+    "Category": "rain"
+  },
+  "DailyForecasts": [
+    {
+      "Date": "2026-09-25T07:00:00-04:00",
+      "EpochDate": 1790334000,
+      "Sun": {
+        "Rise": "2026-09-25T06:49:00-04:00",
+        "Set": "2026-09-25T18:52:00-04:00"
+      },
+      "Temperature": {
+        "Minimum": {
+          "Value": 58,
+          "Unit": "F",
+          "UnitType": 18
+        },
+        "Maximum": {
+          "Value": 69,
+          "Unit": "F",
+          "UnitType": 18
+        }
+      },
+      "RealFeelTemperature": {
+        "Minimum": {
+          "Value": 51,
+          "Unit": "F",
+          "UnitType": 18
+        },
+        "Maximum": {
+          "Value": 68,
+          "Unit": "F",
+          "UnitType": 18
+        }
+      },
+      "Day": {
+        "IconPhrase": "Some sun, then clouds; windy",
+        "ShortPhrase": "Some sun, then clouds; windy",
+        "LongPhrase": "Some sun, then clouds; windy",
+        "HasPrecipitation": false,
+        "PrecipitationProbability": 25,
+        "RainProbability": 25,
+        "Wind": {
+          "Speed": {
+            "Value": 20,
+            "Unit": "mi/h",
+            "UnitType": 9
+          },
+          "Direction": {
+            "Degrees": 0,
+            "Localized": "NNE",
+            "English": "NNE"
+          }
+        },
+        "WindGust": {
+          "Speed": {
+            "Value": 35,
+            "Unit": "mi/h",
+            "UnitType": 9
+          }
+        },
+        "Rain": {
+          "Value": 0,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "HoursOfRain": 0,
+        "CloudCover": 85
+      },
+      "Night": {
+        "IconPhrase": "Mostly cloudy, touch of rain",
+        "ShortPhrase": "Mostly cloudy, touch of rain",
+        "LongPhrase": "Mostly cloudy, touch of rain",
+        "HasPrecipitation": true,
+        "PrecipitationProbability": 55,
+        "RainProbability": 55,
+        "Wind": {
+          "Speed": {
+            "Value": 15,
+            "Unit": "mi/h",
+            "UnitType": 9
+          },
+          "Direction": {
+            "Degrees": 0,
+            "Localized": "N",
+            "English": "N"
+          }
+        },
+        "WindGust": {
+          "Speed": {
+            "Value": 28,
+            "Unit": "mi/h",
+            "UnitType": 9
+          }
+        },
+        "Rain": {
+          "Value": 0.04,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "HoursOfRain": 2,
+        "CloudCover": 85
+      }
+    },
+    {
+      "Date": "2026-09-26T07:00:00-04:00",
+      "EpochDate": 1790420400,
+      "Sun": {
+        "Rise": "2026-09-26T06:50:00-04:00",
+        "Set": "2026-09-26T18:50:00-04:00"
+      },
+      "Temperature": {
+        "Minimum": {
+          "Value": 57,
+          "Unit": "F",
+          "UnitType": 18
+        },
+        "Maximum": {
+          "Value": 69,
+          "Unit": "F",
+          "UnitType": 18
+        }
+      },
+      "RealFeelTemperature": {
+        "Minimum": {
+          "Value": 47,
+          "Unit": "F",
+          "UnitType": 18
+        },
+        "Maximum": {
+          "Value": 66,
+          "Unit": "F",
+          "UnitType": 18
+        }
+      },
+      "Day": {
+        "IconPhrase": "Cloudy and windy, a bit of rain",
+        "ShortPhrase": "Cloudy and windy, a bit of rain",
+        "LongPhrase": "Cloudy and windy, a bit of rain",
+        "HasPrecipitation": true,
+        "PrecipitationProbability": 55,
+        "RainProbability": 55,
+        "Wind": {
+          "Speed": {
+            "Value": 20,
+            "Unit": "mi/h",
+            "UnitType": 9
+          },
+          "Direction": {
+            "Degrees": 0,
+            "Localized": "N",
+            "English": "N"
+          }
+        },
+        "WindGust": {
+          "Speed": {
+            "Value": 38,
+            "Unit": "mi/h",
+            "UnitType": 9
+          }
+        },
+        "Rain": {
+          "Value": 0.04,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "HoursOfRain": 1.5,
+        "CloudCover": 85
+      },
+      "Night": {
+        "IconPhrase": "Windy, periods of rain; ponding on roads",
+        "ShortPhrase": "Windy, periods of rain; ponding on roads",
+        "LongPhrase": "Windy, periods of rain; ponding on roads",
+        "HasPrecipitation": true,
+        "PrecipitationProbability": 91,
+        "RainProbability": 91,
+        "Wind": {
+          "Speed": {
+            "Value": 20,
+            "Unit": "mi/h",
+            "UnitType": 9
+          },
+          "Direction": {
+            "Degrees": 0,
+            "Localized": "NNW",
+            "English": "NNW"
+          }
+        },
+        "WindGust": {
+          "Speed": {
+            "Value": 32,
+            "Unit": "mi/h",
+            "UnitType": 9
+          }
+        },
+        "Rain": {
+          "Value": 0.24,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "HoursOfRain": 3,
+        "CloudCover": 85
+      }
+    }
+  ]
+}

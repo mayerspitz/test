@@ -1,0 +1,217 @@
+{
+  "_comment": "Backyard wind rules. Edit text here without code changes. A tier's table is shown only when \"approved\" is true. Windy is the owner-approved table (verbatim). Breezy, Gale and Storm rows are DRAFTS awaiting owner approval.",
+  "tiers": [
+    {
+      "id": "calm",
+      "minGust": 0,
+      "beaufort": "moderate breeze or less",
+      "summary": "Light wind. No backyard prep needed.",
+      "approved": true,
+      "rows": null
+    },
+    {
+      "id": "breezy",
+      "minGust": 20,
+      "beaufort": "fresh breeze",
+      "summary": "Light items may slide or flap.",
+      "approved": false,
+      "rows": [
+        {
+          "item": "Patio umbrella, pop-up canopy",
+          "sustained": "Sways; fabric flaps",
+          "gusts": "Strains, pulls on base/legs",
+          "action": "Close umbrella; weight canopy legs",
+          "gustsBold": false
+        },
+        {
+          "item": "Sukkah",
+          "sustained": "Walls ripple",
+          "gusts": "Walls billow, schach shifts",
+          "action": "Tie walls; check schach",
+          "gustsBold": false
+        },
+        {
+          "item": "Light chairs, cushions, toys, pots",
+          "sustained": "Stay put",
+          "gusts": "Slide or wobble",
+          "action": "Group against a wall",
+          "gustsBold": false
+        },
+        {
+          "item": "Trash bins, grill cover",
+          "sustained": "Fine",
+          "gusts": "Lids and cover flap",
+          "action": "Close lids; strap cover",
+          "gustsBold": false
+        },
+        {
+          "item": "Trampoline",
+          "sustained": "Fine",
+          "gusts": "Can shift",
+          "action": "Check stakes",
+          "gustsBold": false
+        },
+        {
+          "item": "Trees, fence, shed",
+          "sustained": "Leaves and twigs move",
+          "gusts": "Branches sway",
+          "action": "None needed",
+          "gustsBold": false
+        }
+      ]
+    },
+    {
+      "id": "windy",
+      "minGust": 30,
+      "beaufort": "strong breeze to near gale",
+      "summary": "Moves anything light or loose, not damaging-storm level.",
+      "approved": true,
+      "rows": [
+        {
+          "item": "Patio umbrella, pop-up canopy",
+          "sustained": "Strains, pulls on base/legs",
+          "gusts": "Tips, flips, or launches",
+          "action": "Close and strap, or take down",
+          "gustsBold": true
+        },
+        {
+          "item": "Sukkah",
+          "sustained": "Walls billow, schach shifts",
+          "gusts": "Walls act like sails; schach blows off",
+          "action": "Anchor frame, tie walls, secure schach",
+          "gustsBold": true
+        },
+        {
+          "item": "Light chairs, cushions, toys, pots",
+          "sustained": "Slide or wobble",
+          "gusts": "Blow away or tip",
+          "action": "Bring in or group against a wall",
+          "gustsBold": true
+        },
+        {
+          "item": "Trash bins, grill cover",
+          "sustained": "Lids and cover flap",
+          "gusts": "Tip over / blow off",
+          "action": "Weight bins; remove cover",
+          "gustsBold": false
+        },
+        {
+          "item": "Trampoline",
+          "sustained": "Can shift",
+          "gusts": "Can lift and flip",
+          "action": "Stake down or flip over",
+          "gustsBold": true
+        },
+        {
+          "item": "Trees, fence, shed",
+          "sustained": "Sway / fine",
+          "gusts": "Twigs drop; loose panels rattle",
+          "action": "Secure loose panels; avoid parking under dead limbs",
+          "gustsBold": false
+        }
+      ]
+    },
+    {
+      "id": "gale",
+      "minGust": 40,
+      "beaufort": "gale / strong gale",
+      "summary": "Damaging gusts possible. Secure everything loose; small limbs may fall.",
+      "approved": false,
+      "rows": [
+        {
+          "item": "Patio umbrella, pop-up canopy",
+          "sustained": "Tips, flips, or launches",
+          "gusts": "Breaks; thrown into windows or fences",
+          "action": "Take down and store",
+          "gustsBold": true
+        },
+        {
+          "item": "Sukkah",
+          "sustained": "Walls act like sails; schach blows off",
+          "gusts": "Frame can blow over",
+          "action": "Remove walls and schach, or brace frame",
+          "gustsBold": true
+        },
+        {
+          "item": "Light chairs, cushions, toys, pots",
+          "sustained": "Blow away or tip",
+          "gusts": "Become projectiles",
+          "action": "Bring everything inside",
+          "gustsBold": true
+        },
+        {
+          "item": "Trash bins, grill cover",
+          "sustained": "Tip over / blow off",
+          "gusts": "Bins roll away; grill can tip",
+          "action": "Bring bins in; secure grill",
+          "gustsBold": true
+        },
+        {
+          "item": "Trampoline",
+          "sustained": "Can lift and flip",
+          "gusts": "Can clear fences",
+          "action": "Stake down and flip, or take apart",
+          "gustsBold": true
+        },
+        {
+          "item": "Trees, fence, shed",
+          "sustained": "Branches sway hard",
+          "gusts": "Small limbs fall; loose panels break",
+          "action": "Park away from trees; stay clear of fences",
+          "gustsBold": true
+        }
+      ]
+    },
+    {
+      "id": "storm",
+      "minGust": 55,
+      "beaufort": "storm or stronger",
+      "summary": "Dangerous wind. Stay indoors; expect tree and property damage.",
+      "approved": false,
+      "rows": [
+        {
+          "item": "Patio umbrella, pop-up canopy",
+          "sustained": "Breaks; thrown",
+          "gusts": "Dangerous projectile",
+          "action": "Take down and store before the wind",
+          "gustsBold": true
+        },
+        {
+          "item": "Sukkah",
+          "sustained": "Frame can blow over",
+          "gusts": "Collapse likely",
+          "action": "Take down completely",
+          "gustsBold": true
+        },
+        {
+          "item": "Light chairs, cushions, toys, pots",
+          "sustained": "Become projectiles",
+          "gusts": "Dangerous projectiles",
+          "action": "Everything inside",
+          "gustsBold": true
+        },
+        {
+          "item": "Trash bins, grill cover",
+          "sustained": "Roll away",
+          "gusts": "Thrown",
+          "action": "Bring inside or tie down",
+          "gustsBold": true
+        },
+        {
+          "item": "Trampoline",
+          "sustained": "Can clear fences",
+          "gusts": "Airborne",
+          "action": "Take apart",
+          "gustsBold": true
+        },
+        {
+          "item": "Trees, fence, shed",
+          "sustained": "Limbs break",
+          "gusts": "Trees and power lines can fall; roof damage",
+          "action": "Stay indoors, away from windows",
+          "gustsBold": true
+        }
+      ]
+    }
+  ]
+}
