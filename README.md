@@ -78,6 +78,8 @@ The e2e test needs a Chromium: run `pnpm --filter @windwise/web exec playwright 
 
 ## Deploy to Render
 
+Live: **https://windwise-h6a1.onrender.com** (Render service `windwise`, workspace Mayer, region Virginia, free plan).
+
 `render.yaml` defines one Docker web service built from this branch (`Dockerfile`), health check `/api/health`, auto-deploy on push.
 
 1. Render → New → Blueprint → this repo, branch `claude/magical-knuth-ufkstw` (or create a Web Service with runtime Docker).

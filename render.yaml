@@ -20,4 +20,4 @@ services:
       - key: DEFAULT_UNITS
         value: imperial
       - key: WEB_ORIGIN
-        value: https://windwise.onrender.com
+        value: https://windwise-h6a1.onrender.com
