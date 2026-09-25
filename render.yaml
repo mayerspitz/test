@@ -16,7 +16,7 @@ services:
       - key: ACCUWEATHER_AUTH_MODE
         value: bearer
       - key: ACCUWEATHER_TIER
-        value: free
+        value: trial
       - key: DEFAULT_UNITS
         value: imperial
       - key: WEB_ORIGIN

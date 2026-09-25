@@ -46,12 +46,10 @@ daily request steps down to a window the key allows.
 | `prime`    | 10 days | 72 h   | yes    | Morning / Afternoon / Evening / Overnight |
 | `elite`    | 15 days | 120 h  | yes    | Morning / Afternoon / Evening / Overnight |
 
-**The account is currently on the 14-day free trial** (started Sep 24, 2026, expires **Oct 8, 2026**),
-which AccuWeather's portal describes as full **Elite**-level Core Weather at 500 calls/day (D-21).
-Setting `ACCUWEATHER_TIER=trial` unlocks the 4-period rows and alerts the trial pays for. It is left
-at `free` until the owner confirms the trial was actually activated — the portal showed an
-"Activate Free Trial" button alongside the active subscription, so activation is not certain from the
-screenshots alone.
+**The account is on the 14-day free trial** (started Sep 24, 2026, expires **Oct 8, 2026**), which
+AccuWeather's portal describes as full **Elite**-level Core Weather at 500 calls/day (D-21). The owner
+confirmed he activated it, so the live service runs `ACCUWEATHER_TIER=trial` and produces the
+Morning / Afternoon / Evening / Overnight rows and alerts the trial pays for (D-33).
 
 **On Oct 8, 2026 the trial expires.** Set `ACCUWEATHER_TIER` to whatever plan was bought, or back to
 `free`. Nothing breaks if this is forgotten (D-22 handles it), but reports will quietly cost extra

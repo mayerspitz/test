@@ -2,6 +2,10 @@
 
 **Updated:** Sep 24, 2026 · Keep this file current — it is the first thing the next agent reads.
 
+> **Branch:** everything lives on `claude/magical-knuth-ufkstw`, the branch Render deploys from.
+> If your session was assigned a different branch name, fast-forward this one when your work is
+> ready and delete yours (D-34).
+
 ## In one paragraph
 
 WindWise is built, tested and deployed. All six milestones from `docs/HANDOFF.md` are done. 63 unit
@@ -10,6 +14,8 @@ report and the PDF renders on exactly one landscape page. The app is live on Ren
 AccuWeather key is now set, so reports should work end to end — **but no one has yet confirmed a
 report built from real AccuWeather data**, because the agent sandbox cannot reach either
 `dataservice.accuweather.com` or `onrender.com`. That single confirmation is the top open item.
+The service runs `ACCUWEATHER_TIER=trial`, so it should produce the full four-period rows and
+alerts (D-33) — that too is unconfirmed against live data.
 
 ## Milestones
 
@@ -61,28 +67,28 @@ report built from real AccuWeather data**, because the agent sandbox cannot reac
    "built" and "working". Search `11219`, pick Fri → Sun, generate, download the PDF.
    - Missing-key error → `ACCUWEATHER_API_KEY` is blank in Render.
    - "API key invalid or plan doesn't include this data" → try `ACCUWEATHER_AUTH_MODE=query` (D-32).
-2. **Decide `ACCUWEATHER_TIER`.** It is `free` (Day/Night only). If the trial was activated, `trial`
-   unlocks the 4-period rows and alerts the trial already pays for. See `docs/OPERATIONS.md`.
-3. **Set the health check path** to `/api/health` in Render → Settings. It could not be set when the
+   - Day/Night rows instead of Morning/Afternoon/Evening/Overnight → the trial is not actually
+     granting Elite-level hourly; the report still renders, it is just coarser.
+2. **Set the health check path** to `/api/health` in Render → Settings. It could not be set when the
    service was created and is still blank, so Render is not restarting a hung instance.
-4. **Answer the open questions below.** Each one is a small contained edit; they are blocked only on
-   the owner's answer, not on work.
-5. **Before Oct 8, 2026:** the trial expires. Set `ACCUWEATHER_TIER` to the plan bought.
+3. **Answer the open questions below.** Each is a small contained edit, blocked only on an answer.
+4. **Before Oct 8, 2026:** the trial expires. Set `ACCUWEATHER_TIER` to the plan bought, or back to
+   `free`. Reports keep working either way (D-22), but they lose the 4-period rows and alerts.
 
 ## Open questions for the owner
 
 Nothing here is blocked on engineering. Each has a documented default that ships today.
 
-| #   | Question                                                            | Default in place                                    | Decision |
-| --- | ------------------------------------------------------------------- | --------------------------------------------------- | -------- |
-| Q1  | Which AccuWeather plan are you buying when the trial ends Oct 8?    | `free` — Day/Night rows, 5 days, no alerts          | D-21     |
-| Q2  | Approve the Breezy / Gale / Storm backyard wording?                 | Drafted but hidden; those tiers show a summary line | D-31     |
-| Q3  | Sukkah row year-round, or only during Sukkot?                       | Year-round                                          | D-30     |
-| Q4  | "Fri AM" prose ("Rising to upper 60s" / "Low") or numbers?          | Numbers: `68° (66°)`, `10%`                         | D-27     |
-| Q5  | `(~N hrs)` on every row, or Day/Night only as in your sample?       | Day/Night only                                      | D-28     |
-| Q6  | Backyard header rounding — "At 20 mph" / "At 35–40 mph" acceptable? | Nearest 5 mph; gusts as a 5 mph band                | D-29     |
-| Q7  | A custom domain, or is the `onrender.com` URL fine?                 | `onrender.com`                                      | —        |
-| Q8  | Pay for Render Starter to kill the ~1 minute cold start?            | Free plan, sleeps after 15 min idle                 | —        |
+| #   | Question                                                                                    | Default in place                                    | Decision |
+| --- | ------------------------------------------------------------------------------------------- | --------------------------------------------------- | -------- |
+| Q1  | Which plan replaces the trial when it ends Oct 8? (tier itself: answered — `trial` is live) | `trial` now; falls back to `free`                   | D-33     |
+| Q2  | Approve the Breezy / Gale / Storm backyard wording?                                         | Drafted but hidden; those tiers show a summary line | D-31     |
+| Q3  | Sukkah row year-round, or only during Sukkot?                                               | Year-round                                          | D-30     |
+| Q4  | "Fri AM" prose ("Rising to upper 60s" / "Low") or numbers?                                  | Numbers: `68° (66°)`, `10%`                         | D-27     |
+| Q5  | `(~N hrs)` on every row, or Day/Night only as in your sample?                               | Day/Night only                                      | D-28     |
+| Q6  | Backyard header rounding — "At 20 mph" / "At 35–40 mph" acceptable?                         | Nearest 5 mph; gusts as a 5 mph band                | D-29     |
+| Q7  | A custom domain, or is the `onrender.com` URL fine?                                         | `onrender.com`                                      | —        |
+| Q8  | Pay for Render Starter to kill the ~1 minute cold start?                                    | Free plan, sleeps after 15 min idle                 | —        |
 
 ## Deliberately not built (v1 scope)
 

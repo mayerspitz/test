@@ -60,6 +60,13 @@ so reversing one is a known, contained edit.
 | D-31 | Breezy / Gale / Storm backyard wording                                  | Drafted but **`"approved": false`** — those tiers render the summary line only       | D-11: the owner approves wording before it ships. Drafts live in JSON so approving them is a one-word edit, not a code change                                                              | Set `"approved": true` in `packages/shared/wind-rules.json` |
 | D-32 | Auth mode for the current key                                           | `bearer`                                                                             | The key is a `zpka_…` key from AccuWeather's current portal, which authenticates with an `Authorization: Bearer` header. Older keys use `?apikey=`                                         | `ACCUWEATHER_AUTH_MODE=query`                               |
 
+## E. Confirmed by the owner, Sep 24, 2026
+
+| #    | Decision                                                          | Source | Reason                                                                                                                                                                                                                                                                                                          |
+| ---- | ----------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D-33 | `ACCUWEATHER_TIER=trial` in the live deployment                   | owner  | The owner confirmed he activated the 14-day free trial, so the key really does carry Elite-level Core Weather. This restores the **4-period rows and alerts** — the format originally approved — rather than the Day/Night fallback. Resolves Q1 until the trial expires **Oct 8, 2026**                        |
+| D-34 | **One deploy branch.** `claude/magical-knuth-ufkstw` is canonical | owner  | Work was split across two branches after a session was assigned a different one. Docs and code that do not reach the deployed branch do not ship, so the branches were consolidated rather than left to diverge. Any future session assigned another branch should fast-forward this one when its work is ready |
+
 ## D. Superseded
 
 | #   | Was                                                    | Superseded by | Note                                                                   |
