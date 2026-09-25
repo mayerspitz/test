@@ -79,6 +79,23 @@ A `503 "AccuWeather API key is not configured on the server."` from `/api/locati
 env var is missing or blank. `/api/health` and `/api/capabilities` answer without a key, so a green
 health check alone does **not** prove the key works.
 
+### What an agent cannot change here
+
+The Render MCP tools can create a service and write its **environment variables** — nothing else.
+Service _settings_ have no tool, there are no Render API credentials in the agent container, and
+`api.render.com` is blocked by the egress policy. So these are dashboard-only, by hand:
+
+| Setting           | Where              | Status                                        |
+| ----------------- | ------------------ | --------------------------------------------- |
+| Health check path | Service → Settings | **Still blank.** Should be `/api/health`      |
+| Instance plan     | Service → Settings | `free`; Starter removes the ~1 min cold start |
+| Custom domain     | Service → Settings | none                                          |
+| Deploy branch     | Service → Settings | `claude/magical-knuth-ufkstw`                 |
+
+`render.yaml` already declares `healthCheckPath: /api/health`, but this service was created through
+the API rather than synced from the Blueprint, so that file is documentation until someone links the
+service to the Blueprint in the dashboard.
+
 > **Sandbox note for agents:** this session's egress policy blocks both `dataservice.accuweather.com`
 > and `onrender.com`. Neither the live app nor the AccuWeather API can be reached from the agent
 > container — a `CONNECT tunnel failed, response 403`. Verify through Render's own logs

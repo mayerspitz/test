@@ -69,8 +69,8 @@ alerts (D-33) — that too is unconfirmed against live data.
    - "API key invalid or plan doesn't include this data" → try `ACCUWEATHER_AUTH_MODE=query` (D-32).
    - Day/Night rows instead of Morning/Afternoon/Evening/Overnight → the trial is not actually
      granting Elite-level hourly; the report still renders, it is just coarser.
-2. **Set the health check path** to `/api/health` in Render → Settings. It could not be set when the
-   service was created and is still blank, so Render is not restarting a hung instance.
+2. **Set the health check path** to `/api/health` in Render → Settings. It is still blank, so Render
+   is not restarting a hung instance. **An agent cannot do this** — see `docs/OPERATIONS.md`.
 3. **Answer the open questions below.** Each is a small contained edit, blocked only on an answer.
 4. **Before Oct 8, 2026:** the trial expires. Set `ACCUWEATHER_TIER` to the plan bought, or back to
    `free`. Reports keep working either way (D-22), but they lose the 4-period rows and alerts.
