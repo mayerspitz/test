@@ -94,7 +94,13 @@ API key.
 ## `apps/web`
 
 One screen: `LocationSearch` (300ms debounce) → `RangePicker` (bounded by `/api/capabilities`) →
-`UnitsToggle` → `ReportView`. The HTML preview deliberately mirrors the PDF's column order and style
+`UnitsToggle` → `ReportView`.
+
+`url-state.ts` mirrors the controls in the query string (`loc`, `name`, `admin`, `country`, `start`,
+`end`, `units`), so the current view is always a shareable link. `start`/`end` are `YYYY-MM-DD:period`.
+The location's display name rides along so a shared link can fill the search box without a lookup.
+Parsing is total: anything malformed comes back null and the control falls back to its default,
+never to a half-applied guess (D-35). The HTML preview deliberately mirrors the PDF's column order and style
 tokens, so what the owner sees is what downloads. Tables scroll horizontally on narrow screens; the
 owner works on mobile often.
 

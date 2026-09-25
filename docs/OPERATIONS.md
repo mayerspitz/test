@@ -115,7 +115,17 @@ Production shape, one process:
 pnpm build && pnpm start
 ```
 
-Requires Node ≥22.12 and pnpm 10. The e2e test needs a Chromium once:
+Requires Node ≥22.12 and pnpm 10.
+
+**Running the e2e test in the agent sandbox:** Playwright wants a browser build it cannot download
+here. Point it at the preinstalled one instead:
+
+```bash
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm test:e2e
+```
+
+The version suffix changes as the image is rebuilt — check `ls /opt/pw-browsers` if that path is
+gone. Elsewhere, the e2e test needs a Chromium once:
 `pnpm --filter @windwise/web exec playwright install chromium`, or point
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE` at an existing one.
 

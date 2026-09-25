@@ -31,3 +31,30 @@ test('search → generate → download', async ({ page }) => {
     true,
   );
 });
+
+test('controls are mirrored in the URL, and a shared link prefills them', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Location').fill('Brook');
+  await page.getByRole('option', { name: 'Brooklyn, NY, US' }).click();
+  await page.getByRole('radio', { name: '°C · km/h · mm' }).click();
+
+  // Picking a location and units rewrites the query string, without adding a history entry.
+  await expect(page).toHaveURL(/[?&]loc=/);
+  await expect(page).toHaveURL(/[?&]name=Brooklyn/);
+  await expect(page).toHaveURL(/[?&]units=metric/);
+  await expect(page).toHaveURL(/[?&]start=\d{4}-\d{2}-\d{2}%3A[a-z]+/);
+
+  const shared = page.url();
+  await page.goto('about:blank');
+  await page.goto(shared);
+
+  // Opening that link restores the controls, and generates the same report.
+  await expect(page.getByLabel('Location')).toHaveValue(/Brooklyn/);
+  await expect(page.getByRole('radio', { name: '°C · km/h · mm' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await page.getByRole('button', { name: 'Generate' }).click();
+  const sheet = page.getByRole('article', { name: 'Weather report' });
+  await expect(sheet.getByRole('heading', { level: 1 })).toContainText('Brooklyn, NY — Weather');
+});

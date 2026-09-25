@@ -12,10 +12,10 @@ WindWise is built, tested and deployed. All six milestones from `docs/HANDOFF.md
 tests and one Playwright smoke test pass; the golden fixture reproduces the owner's approved Brooklyn
 report and the PDF renders on exactly one landscape page. The app is live on Render and the
 AccuWeather key is now set, so reports should work end to end — **but no one has yet confirmed a
-report built from real AccuWeather data**, because the agent sandbox cannot reach either
-`dataservice.accuweather.com` or `onrender.com`. That single confirmation is the top open item.
-The service runs `ACCUWEATHER_TIER=trial`, so it should produce the full four-period rows and
-alerts (D-33) — that too is unconfirmed against live data.
+report on real AccuWeather data, confirmed by the owner on Sep 25, 2026**: a Brooklyn Fri–Sun
+report rendered 12 four-period rows with live alerts (Coastal Flood Watch, Wind Advisory, Rip
+Current Statement), sunrise/sunset and a worst window. That confirms the key, the Bearer auth mode
+and `ACCUWEATHER_TIER=trial` all work against the real API.
 
 ## Milestones
 
@@ -44,7 +44,7 @@ alerts (D-33) — that too is unconfirmed against live data.
 
 ## Verified, and how
 
-- `pnpm test` → **63 passing** (38 shared, 20 server, 5 web).
+- `pnpm test` → **69 passing** (38 shared, 20 server, 11 web).
 - `pnpm typecheck`, `pnpm lint`, `pnpm format:check` → clean.
 - Playwright smoke (search → generate → download PDF) passes at desktop **and** mobile viewports,
   against a mock AccuWeather.
@@ -54,25 +54,19 @@ alerts (D-33) — that too is unconfirmed against live data.
 
 ## Not verified
 
-- **A real AccuWeather response.** Every test runs against a mock. The sandbox's network policy
-  blocks `dataservice.accuweather.com`, so no live call has ever been made with a real key.
-- **The live site from an agent.** `onrender.com` is blocked too; Render's logs are the only window.
+- **The live site from an agent.** `onrender.com` and `dataservice.accuweather.com` are blocked by
+  the sandbox's network policy, so every automated test still runs against a mock. The owner has
+  since confirmed a real report by hand (see below), which is the live proof the tests cannot give.
 - **The Docker image build itself.** Base images could not be pulled from the sandbox, so the
   Dockerfile's _steps_ were reproduced by hand in a clean checkout rather than built. Render builds
   the image successfully, which is the real proof.
 
 ## Next steps, highest value first
 
-1. **Open the live site and generate one real report.** This is the only thing standing between
-   "built" and "working". Search `11219`, pick Fri → Sun, generate, download the PDF.
-   - Missing-key error → `ACCUWEATHER_API_KEY` is blank in Render.
-   - "API key invalid or plan doesn't include this data" → try `ACCUWEATHER_AUTH_MODE=query` (D-32).
-   - Day/Night rows instead of Morning/Afternoon/Evening/Overnight → the trial is not actually
-     granting Elite-level hourly; the report still renders, it is just coarser.
-2. **Set the health check path** to `/api/health` in Render → Settings. It is still blank, so Render
+1. **Set the health check path** to `/api/health` in Render → Settings. It is still blank, so Render
    is not restarting a hung instance. **An agent cannot do this** — see `docs/OPERATIONS.md`.
-3. **Answer the open questions below.** Each is a small contained edit, blocked only on an answer.
-4. **Before Oct 8, 2026:** the trial expires. Set `ACCUWEATHER_TIER` to the plan bought, or back to
+2. **Answer the open questions below.** Each is a small contained edit, blocked only on an answer.
+3. **Before Oct 8, 2026:** the trial expires. Set `ACCUWEATHER_TIER` to the plan bought, or back to
    `free`. Reports keep working either way (D-22), but they lose the 4-period rows and alerts.
 
 ## Open questions for the owner

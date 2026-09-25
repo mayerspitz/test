@@ -78,6 +78,12 @@ One report costs up to 4 calls (location, daily, hourly, alerts); repeat request
 
 The e2e test needs a Chromium: run `pnpm --filter @windwise/web exec playwright install chromium` once, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE`.
 
+## Shareable links
+
+Every control is mirrored in the URL (`?loc=…&name=…&start=2026-09-25:morning&end=2026-09-27:overnight&units=imperial`),
+so the current view can be copied and sent. Opening a link prefills the controls; it does not
+generate the report, so a shared link never spends an API call before the recipient asks (D-35).
+
 ## API
 
 | Method | Route               | Body / query                          | Returns                                               |

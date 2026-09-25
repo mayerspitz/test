@@ -1,14 +1,18 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { LocationResult, ReportRequestBody, Units } from '@windwise/shared';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { api, saveFile } from './api';
 import { LocationSearch } from './components/LocationSearch';
 import { RangePicker } from './components/RangePicker';
 import { ReportSkeleton, ReportView } from './components/ReportView';
 import { UnitsToggle } from './components/UnitsToggle';
 import { dayOptions, defaultRange, localToday, toRequestRange, type RangePick } from './dates';
+import { buildSearch, parseControls } from './url-state';
 
 const FALLBACK_DAYS = 5;
+
+/** Controls carried by the link that opened the page, so a shared URL prefills the form. */
+const fromUrl = parseControls(window.location.search);
 
 export function App() {
   const caps = useQuery({
@@ -20,12 +24,22 @@ export function App() {
   const today = useMemo(() => localToday(), []);
   const days = useMemo(() => dayOptions(today, maxDays), [today, maxDays]);
 
-  const [location, setLocation] = useState<LocationResult | null>(null);
-  const [units, setUnits] = useState<Units>('imperial');
-  const [picked, setPicked] = useState<{ start?: RangePick; end?: RangePick }>({});
+  const [location, setLocation] = useState<LocationResult | null>(fromUrl.location);
+  const [units, setUnits] = useState<Units>(fromUrl.units ?? 'imperial');
+  const [picked, setPicked] = useState<{ start?: RangePick; end?: RangePick }>({
+    ...(fromUrl.start ? { start: fromUrl.start } : {}),
+    ...(fromUrl.end ? { end: fromUrl.end } : {}),
+  });
   const defaults = defaultRange(today, maxDays);
   const start = picked.start ?? defaults.start;
   const end = picked.end ?? defaults.end;
+
+  // Mirror the controls in the URL so the current view is always a shareable link. replaceState,
+  // not pushState: changing a filter should not add a Back-button step.
+  const search = buildSearch({ location, start, end, units });
+  useEffect(() => {
+    window.history.replaceState(null, '', `${window.location.pathname}${search}`);
+  }, [search]);
 
   const report = useMutation({ mutationFn: api.report });
   const pdf = useMutation({

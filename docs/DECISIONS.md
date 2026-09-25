@@ -67,6 +67,8 @@ so reversing one is a known, contained edit.
 | D-33 | `ACCUWEATHER_TIER=trial` in the live deployment                   | owner  | The owner confirmed he activated the 14-day free trial, so the key really does carry Elite-level Core Weather. This restores the **4-period rows and alerts** — the format originally approved — rather than the Day/Night fallback. Resolves Q1 until the trial expires **Oct 8, 2026**                        |
 | D-34 | **One deploy branch.** `claude/magical-knuth-ufkstw` is canonical | owner  | Work was split across two branches after a session was assigned a different one. Docs and code that do not reach the deployed branch do not ship, so the branches were consolidated rather than left to diverge. Any future session assigned another branch should fast-forward this one when its work is ready |
 
+| D-35 | The controls are mirrored in the **query string**; opening a link prefills them but does **not** auto-generate | owner | The owner asked for shareable links that prefill. Generating on load would spend an AccuWeather call before the recipient asked for one, and on the free Render plan a shared link is often the request that wakes the instance. `replaceState` is used, not `pushState`, so changing a filter does not add a Back-button step. Malformed params are dropped rather than half-applied, so a mangled link falls back to the defaults instead of erroring |
+
 ## D. Superseded
 
 | #   | Was                                                    | Superseded by | Note                                                                   |
