@@ -55,8 +55,10 @@ describe('tierForGust', () => {
     }
   });
 
-  it('only Windy is approved among the tables (drafts await owner approval)', () => {
-    expect(WIND_TIERS.filter((t) => t.approved && t.rows).map((t) => t.id)).toEqual(['windy']);
+  it('every tier that has rows is approved, so no tier renders a heading with no table', () => {
+    // The owner approved Breezy, Gale and Storm on Sep 25, 2026 (D-36). Before that, a Gale-tier
+    // forecast rendered the summary line and nothing under it.
+    expect(WIND_TIERS.filter((t) => t.rows && !t.approved)).toEqual([]);
   });
 });
 
@@ -69,10 +71,10 @@ describe('buildWindSection', () => {
     expect(w.summary).toBe('**Fri:** 8 mph, gusts 15. Light wind. No backyard prep needed.');
   });
 
-  it('Breezy: summary shown, draft table withheld until approved', () => {
+  it('Breezy: summary and table shown, but no rule of thumb', () => {
     const w = buildWindSection([p('2026-09-25', 'Fri morning', 14, 25)], 'imperial');
     expect(w.tier).toBe('breezy');
-    expect(w.rows).toBeNull();
+    expect(w.rows).toHaveLength(6);
     expect(w.ruleOfThumb).toBeNull(); // no period reaches 30 mph gusts
   });
 
@@ -101,5 +103,35 @@ describe('buildWindSection', () => {
     expect(w.ruleOfThumb).toBe(
       'secure anything that catches air or weighs under ~20 lbs **before Fri evening**.',
     );
+  });
+});
+
+describe('every tier renders its table (regression: Gale showed a heading with no rows)', () => {
+  const cases = [
+    { tier: 'breezy', wind: 14, gust: 25 },
+    { tier: 'windy', wind: 20, gust: 36 },
+    { tier: 'gale', wind: 21, gust: 41 },
+    { tier: 'storm', wind: 40, gust: 60 },
+  ] as const;
+
+  for (const c of cases) {
+    it(`${c.tier}: gusts ${c.gust} produce a full 6-row table`, () => {
+      const w = buildWindSection([p('2026-09-25', 'Fri morning', c.wind, c.gust)], 'imperial');
+      expect(w.tier).toBe(c.tier);
+      expect(w.rows).not.toBeNull();
+      expect(w.rows).toHaveLength(6);
+      for (const row of w.rows!) {
+        expect(row.item).toBeTruthy();
+        expect(row.sustained).toBeTruthy();
+        expect(row.gusts).toBeTruthy();
+        expect(row.action).toBeTruthy();
+      }
+    });
+  }
+
+  it('Calm is the only tier with no table', () => {
+    const w = buildWindSection([p('2026-09-25', 'Fri morning', 8, 15)], 'imperial');
+    expect(w.tier).toBe('calm');
+    expect(w.rows).toBeNull();
   });
 });

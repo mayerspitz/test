@@ -1,5 +1,5 @@
 {
-  "_comment": "Backyard wind rules. Edit text here without code changes. A tier's table is shown only when \"approved\" is true. Windy is the owner-approved table (verbatim). Breezy, Gale and Storm rows are DRAFTS awaiting owner approval.",
+  "_comment": "Backyard wind rules. Edit text here without code changes. A tier's table is shown only when \"approved\" is true. Windy is the owner-approved table from the original report (verbatim). Breezy, Gale and Storm were drafted by an agent and approved by the owner on Sep 25, 2026 (see docs/DECISIONS.md D-36). Do not reword an approved tier without asking the owner.",
   "tiers": [
     {
       "id": "calm",
@@ -14,7 +14,7 @@
       "minGust": 20,
       "beaufort": "fresh breeze",
       "summary": "Light items may slide or flap.",
-      "approved": false,
+      "approved": true,
       "rows": [
         {
           "item": "Patio umbrella, pop-up canopy",
@@ -116,7 +116,7 @@
       "minGust": 40,
       "beaufort": "gale / strong gale",
       "summary": "Damaging gusts possible. Secure everything loose; small limbs may fall.",
-      "approved": false,
+      "approved": true,
       "rows": [
         {
           "item": "Patio umbrella, pop-up canopy",
@@ -167,7 +167,7 @@
       "minGust": 55,
       "beaufort": "storm or stronger",
       "summary": "Dangerous wind. Stay indoors; expect tree and property damage.",
-      "approved": false,
+      "approved": true,
       "rows": [
         {
           "item": "Patio umbrella, pop-up canopy",

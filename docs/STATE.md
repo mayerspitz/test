@@ -44,7 +44,7 @@ and `ACCUWEATHER_TIER=trial` all work against the real API.
 
 ## Verified, and how
 
-- `pnpm test` → **69 passing** (38 shared, 20 server, 11 web).
+- `pnpm test` → **76 passing** (45 shared, 20 server, 11 web).
 - `pnpm typecheck`, `pnpm lint`, `pnpm format:check` → clean.
 - Playwright smoke (search → generate → download PDF) passes at desktop **and** mobile viewports,
   against a mock AccuWeather.

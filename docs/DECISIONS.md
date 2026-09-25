@@ -69,6 +69,8 @@ so reversing one is a known, contained edit.
 
 | D-35 | The controls are mirrored in the **query string**; opening a link prefills them but does **not** auto-generate | owner | The owner asked for shareable links that prefill. Generating on load would spend an AccuWeather call before the recipient asked for one, and on the free Render plan a shared link is often the request that wakes the instance. `replaceState` is used, not `pushState`, so changing a filter does not add a Back-button step. Malformed params are dropped rather than half-applied, so a mangled link falls back to the defaults instead of erroring |
 
+| D-36 | Breezy, Gale and Storm backyard wording **approved** and live | owner | Approved Sep 25, 2026 after review. This was not cosmetic: a real forecast (Brooklyn, gusts to 41 mph) landed in Gale, and because Gale was gated `approved: false` the report rendered the "What Happens in Your Backyard" heading and summary line with **no table under it** — which also broke D-8, the rule that the one-page PDF contains both sections. Approving the drafts closed that hole. The gate remains in the code for any future tier or rewording |
+
 ## D. Superseded
 
 | #   | Was                                                    | Superseded by | Note                                                                   |
