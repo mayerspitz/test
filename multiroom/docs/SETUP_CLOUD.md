@@ -1,7 +1,7 @@
 # Setup: cloud app + one home Pi (the chosen design)
 
 ```
-Phone ──https──► https://<app>.onrender.com        (Render, free plan: web app, speakers, queues, login)
+Phone ──https──► https://home-audio-kx2w.onrender.com        (Render, free plan: web app, speakers, queues, login)
                      ▲   /demo/ = the demo
                      │ Wi-Fi, outgoing connection only (no router setup)
                  Home Pi ── USB hub ── 1 Bluetooth adapter per speaker ──► up to 10 speakers
@@ -48,7 +48,7 @@ The service is on Render (see `render.yaml`). Its only setting is `MULTIROOM_TOK
    sudo apt-get install -y git
    git clone -b claude/upbeat-edison-2k76xq https://github.com/mayerspitz/test.git
    cd test/multiroom
-   ./deploy/install-home.sh --cloud https://<app>.onrender.com --password '<password>' --data /srv/multiroom
+   ./deploy/install-home.sh --cloud https://home-audio-kx2w.onrender.com --password '<password>' --data /srv/multiroom
    ```
 5. For each speaker, put it in pairing mode, pair it with **its own adapter**, and add it:
    ```bash

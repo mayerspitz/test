@@ -5,7 +5,7 @@ _Last updated: 2026-09-28 (round 3)_
 
 > **Hardware and setup are being finalized in [PLAN_DISCUSSION.md](PLAN_DISCUSSION.md).** It compares the earlier agent's handoff (10 speakers, one central Pi with 10 USB Bluetooth adapters, 500 GB SSD) with this build, and lists questions Q-A to Q-I. Nothing from the handoff counts as decided until you confirm it there.
 
-**Demo:** https://home-audio-demo.onrender.com (Render free plan; the first visit after it has been idle takes about a minute)
+**App:** https://home-audio-kx2w.onrender.com (password login) · **Demo:** https://home-audio-kx2w.onrender.com/demo/ (Render free plan; the first visit after it has been idle takes about a minute)
 
 ## Decisions made
 

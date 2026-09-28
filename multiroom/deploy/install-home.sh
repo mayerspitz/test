@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sets up the HOME PI for cloud mode: music library on the SSD, all Bluetooth speakers,
 # YouTube fetching, and the link to the cloud app. Run once on the Pi:
-#   ./deploy/install-home.sh --cloud https://home-audio.onrender.com --password 'YOUR-PASSWORD' [--data /srv/multiroom]
+#   ./deploy/install-home.sh --cloud https://home-audio-kx2w.onrender.com --password 'YOUR-PASSWORD' [--data /srv/multiroom]
 # Then add speakers with ./deploy/home-speaker.sh (see docs/SETUP_CLOUD.md).
 source "$(dirname "$0")/lib.sh"
 

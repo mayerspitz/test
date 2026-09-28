@@ -9,7 +9,7 @@ A web app on your phone decides **what plays on which Bluetooth speaker**. Up to
 - **Any stream URL:** internet radio, or media from your own custom app.
 - **Status per speaker:** see which bridges and speakers are online, with speaker battery level where the speaker reports it.
 - **Preview on your phone:** 🎧 plays a song on the phone only, before you send it to a speaker. On a speaker card, 🎧 listens along to that speaker.
-- **Live demo:** https://home-audio-demo.onrender.com
+- **Live demo:** https://home-audio-kx2w.onrender.com/demo/
 - **Stream-only volume per speaker.** The speaker's own volume is **never** changed by the system.
 
 <p align="center">
