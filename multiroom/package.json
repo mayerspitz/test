@@ -1,0 +1,19 @@
+{
+  "name": "multiroom",
+  "private": true,
+  "description": "Phone-controlled multi-room audio: one hub, one small bridge per Bluetooth speaker.",
+  "workspaces": [
+    "hub",
+    "agent",
+    "tools"
+  ],
+  "scripts": {
+    "demo": "npm run demo -w hub",
+    "start": "npm start -w hub",
+    "test": "npm test --workspaces --if-present",
+    "discover": "node tools/discover-audio-systems.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

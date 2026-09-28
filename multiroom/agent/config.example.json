@@ -1,0 +1,20 @@
+{
+  "hub": "http://192.168.1.10:8080",
+  "token": "change-me",
+  "zone": { "id": "kitchen", "name": "Kitchen" },
+
+  "bluetooth": {
+    "speaker": "AA:BB:CC:DD:EE:FF",
+    "adapter": "hci0",
+    "autoReconnect": true,
+    "pauseWhenDisconnected": true,
+    "lockSinkVolume": true
+  },
+
+  "player": {
+    "type": "mpv",
+    "mpvPath": "mpv",
+    "audioDevice": "auto",
+    "extraArgs": []
+  }
+}

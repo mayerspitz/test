@@ -1,0 +1,11 @@
+{
+  "name": "multiroom-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Helper tools: discover and probe existing multi-room audio systems on your network.",
+  "type": "module",
+  "bin": { "discover-audio-systems": "discover-audio-systems.js" },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

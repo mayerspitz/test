@@ -1,0 +1,5 @@
+node_modules/
+hub/data/
+hub/demo-data/
+*.log
+.DS_Store

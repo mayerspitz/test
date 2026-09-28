@@ -1,0 +1,22 @@
+{
+  "name": "multiroom-hub",
+  "version": "0.1.0",
+  "description": "Multi-room hub: music library, YouTube Music, per-speaker queues and software volume, phone web app.",
+  "private": true,
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "demo": "node scripts/demo.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "busboy": "^1.6.0",
+    "express": "^5.1.0",
+    "music-metadata": "^11.0.0",
+    "ws": "^8.18.0"
+  }
+}
