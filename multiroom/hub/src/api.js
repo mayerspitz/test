@@ -30,9 +30,12 @@ export function createApi({ zones, library, youtube }) {
   api.patch('/zones/:id', cmd((id, b) => zones.rename(id, b.name)));
   api.delete('/zones/:id', wrap((req) => (zones.remove(req.params.id), ok)));
 
-  api.post('/zones/:id/play', cmd((id, b) => {
+  api.post('/zones/:id/play', wrap(async (req) => {
+    const id = req.params.id;
+    const b = req.body ?? {};
+    zones.zone(id);
     const mode = b.mode ?? 'replace';
-    let items = expandItems(b.items, library);
+    let items = await expandItems(b.items, library);
     let startIndex = Number(b.startIndex) || 0;
     if (mode === 'replace' && b.shuffle !== undefined) zones.setMode(id, { shuffle: Boolean(b.shuffle) });
     if (mode === 'replace' && zones.zone(id).shuffle && items.length > 1) {
@@ -41,6 +44,7 @@ export function createApi({ zones, library, youtube }) {
       startIndex = 0;
     }
     zones.play(id, items, { mode, startIndex });
+    return zoneOf(req);
   }));
   api.post('/zones/:id/pause', cmd((id) => zones.pause(id)));
   api.post('/zones/:id/resume', cmd((id) => zones.resume(id)));
@@ -64,7 +68,7 @@ export function createApi({ zones, library, youtube }) {
   api.get('/library/tracks', wrap((req) => library.list({
     collection: req.query.collection,
     q: req.query.q,
-    limit: Math.min(Number(req.query.limit) || 500, 5000),
+    limit: Math.min(Number(req.query.limit) || 500, 100000),
     offset: Number(req.query.offset) || 0,
   })));
   api.get('/library/tracks/:tid', wrap((req) => library.get(req.params.tid)));
@@ -102,16 +106,16 @@ export function createApi({ zones, library, youtube }) {
 //   { kind: 'collection', name }     every track of a collection, in folder order
 //   { kind: 'youtube', id, title?, artist?, duration?, artwork? }
 //   { kind: 'url', url, title? }     any http(s) audio stream / file (internet radio, your own app's media)
-export function expandItems(raw, library) {
+export async function expandItems(raw, library) {
   if (!Array.isArray(raw) || !raw.length) throw badRequest('items must be a non-empty array');
   const out = [];
   for (const it of raw) {
     switch (it?.kind) {
       case 'track':
-        out.push(trackItem(library.get(String(it.id))));
+        out.push(trackItem(await library.get(String(it.id))));
         break;
       case 'collection':
-        out.push(...library.tracksOfCollection(String(it.name)).map(trackItem));
+        out.push(...(await library.tracksOfCollection(String(it.name))).map(trackItem));
         break;
       case 'youtube':
         if (!/^[A-Za-z0-9_-]{11}$/.test(it.id ?? '')) throw badRequest('Invalid YouTube id');

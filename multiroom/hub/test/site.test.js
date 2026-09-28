@@ -24,7 +24,7 @@ const get = (host, p, headers = {}) =>
   });
 
 before(async () => {
-  site = await startSite({ port: 0, host: '127.0.0.1', token: 'prod-secret', prodDataDir: tmpDir(), demoDataDir: tmpDir(), defaultSite: 'app' });
+  site = await startSite({ port: 0, host: '127.0.0.1', token: 'prod-secret', prodDataDir: tmpDir(), demoDataDir: tmpDir(), homeWaitMs: 300 });
 });
 after(() => site.close());
 
@@ -39,6 +39,21 @@ test('demo.* and app.* reach different hubs', async () => {
   assert.deepEqual(prodZones.data, []);
   const demoZones = await waitFor(async () => (await get('demo.example.com', '/api/zones')).data?.length >= 5 && true);
   assert.ok(demoZones);
+});
+
+test('/demo/... serves the demo on the same address; / is the real app', async () => {
+  const demo = await get('home-audio.example.com', '/demo/api/health');
+  const app = await get('home-audio.example.com', '/api/health');
+  assert.deepEqual([demo.data.demo, demo.data.auth], [true, false]);
+  assert.deepEqual([app.data.demo, app.data.auth, app.data.home.online], [false, true, false]);
+  const redirect = await new Promise((resolve) => http.get({ host: '127.0.0.1', port: site.port, path: '/demo' }, (res) => resolve(res)));
+  assert.equal(redirect.statusCode, 301);
+  assert.equal(redirect.headers.location, '/demo/');
+  const page = await new Promise((resolve) => http.get({ host: '127.0.0.1', port: site.port, path: '/demo/' }, (res) => resolve(res.statusCode)));
+  assert.equal(page, 200);
+  // the real app's library lives on the home Pi, which isn't connected in this test
+  const lib = await get('home-audio.example.com', '/api/library/collections', { Authorization: 'Bearer prod-secret' });
+  assert.equal(lib.status, 503);
 });
 
 test('a home bridge connects to the real hub over the same address', async () => {

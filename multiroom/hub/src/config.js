@@ -31,6 +31,9 @@ export function loadConfig(overrides = {}) {
     maxUploadMb: Number(pick('maxUploadMb', 'MULTIROOM_MAX_UPLOAD_MB', 1024)),
     quiet: Boolean(pick('quiet', 'MULTIROOM_QUIET', false)),
     demo: Boolean(overrides.demo),
+    // Cloud mode: the music library lives on the home Pi, reached through /ws/home.
+    homeWaitMs: Number(overrides.homeWaitMs ?? 25_000),
+    remoteHome: ['1', 'true', true].includes(pick('remoteHome', 'MULTIROOM_REMOTE_HOME', false)),
   };
 }
 

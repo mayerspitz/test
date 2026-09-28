@@ -1,7 +1,9 @@
-// One web service, two sites (for the cloud deployment on Render):
-//   demo.<your domain>  -> the demo hub (simulated speakers, sample music, no login)
-//   app.<your domain>   -> the real hub: your phone and your home Pi connect here (MULTIROOM_TOKEN required)
-// Any other address (e.g. the *.onrender.com one) goes to SITE_DEFAULT ("demo" unless set to "app").
+// One web service, two sites (the cloud deployment on Render):
+//   https://<address>/demo/...  -> the demo hub (simulated speakers, sample music, no login)
+//   https://<address>/...       -> the real app: your phone and your home Pi connect here
+//                                  (password = MULTIROOM_TOKEN; music lives on the home Pi)
+// A demo.<domain> / app.<domain> pair of addresses also works, if you ever add a domain.
+// Without MULTIROOM_TOKEN the real app is off and everything shows the demo.
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,19 +11,30 @@ import { startDemo } from '../scripts/demo.js';
 import { HUB_ROOT } from './config.js';
 import { createHub } from './server.js';
 
-export async function startSite({ port = 8080, host = '0.0.0.0', token = '', prodDataDir, demoDataDir, defaultSite = 'demo' } = {}) {
+export async function startSite({ port = 8080, host = '0.0.0.0', token = '', prodDataDir, demoDataDir, defaultSite = 'app', remoteHome = true, homeWaitMs } = {}) {
   // The demo hub listens on a private port only so its simulated bridges can reach it.
   const demo = await startDemo({ dataDir: demoDataDir, port: 0, host: '127.0.0.1' });
-  const prod = token ? await createHub({ dataDir: prodDataDir ?? path.join(HUB_ROOT, 'data'), token, listen: false }) : null;
+  const prod = token ? await createHub({ dataDir: prodDataDir ?? path.join(HUB_ROOT, 'data'), token, listen: false, remoteHome, homeWaitMs }) : null;
 
+  // Picks the hub for a request; /demo/... is rewritten to /... for the demo hub.
   const pick = (req) => {
     const name = String(req.headers.host ?? '').toLowerCase().split(':')[0];
     if (name.startsWith('demo.')) return demo.hub;
     if (name.startsWith('app.')) return prod;
-    return defaultSite === 'app' ? prod : demo.hub;
+    if (req.url === '/demo' || req.url.startsWith('/demo/') || req.url.startsWith('/demo?')) {
+      req.url = req.url.slice(5) || '/';
+      if (!req.url.startsWith('/')) req.url = `/${req.url}`;
+      return demo.hub;
+    }
+    return defaultSite === 'app' && prod ? prod : demo.hub;
   };
 
   const server = http.createServer((req, res) => {
+    if (req.url === '/demo') {
+      res.writeHead(301, { Location: '/demo/' });
+      res.end();
+      return;
+    }
     const hub = pick(req);
     if (!hub) {
       res.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -61,9 +74,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     port: Number(process.env.PORT || 8080),
     token: process.env.MULTIROOM_TOKEN ?? '',
     prodDataDir: process.env.MULTIROOM_DATA_DIR,
-    defaultSite: process.env.SITE_DEFAULT === 'app' ? 'app' : 'demo',
+    defaultSite: process.env.SITE_DEFAULT === 'demo' ? 'demo' : 'app',
+    remoteHome: process.env.MULTIROOM_REMOTE_HOME !== '0',
   });
-  console.log(`Site listening on port ${site.port}: demo.* -> demo, app.* -> ${site.prod ? 'real hub' : 'NOT CONFIGURED (no MULTIROOM_TOKEN)'}`);
+  console.log(`Site listening on port ${site.port}: /demo -> demo, / -> ${site.prod ? 'real app (music on the home Pi)' : 'demo (no MULTIROOM_TOKEN set)'}`);
   for (const sig of ['SIGINT', 'SIGTERM']) {
     process.on(sig, async () => {
       await site.close();

@@ -11,6 +11,7 @@ import { Library } from './library.js';
 import { createLogger } from './log.js';
 import { JsonStore } from './store.js';
 import { YouTube } from './youtube.js';
+import { HomeTunnel, RemoteLibrary } from './home-tunnel.js';
 import { ZoneManager } from './zones.js';
 
 export const VERSION = '0.1.0';
@@ -20,19 +21,52 @@ export async function createHub(overrides = {}) {
   const log = createLogger(config.quiet);
 
   const store = new JsonStore(path.join(config.dataDir, 'state.json'), { zones: {} }, { log });
-  const library = new Library({
-    dir: config.libraryDir,
-    indexFile: path.join(config.dataDir, 'library-index.json'),
-    maxUploadBytes: config.maxUploadMb * 1024 * 1024,
-    log,
-  });
-  await library.init();
-  const youtube = new YouTube({ bin: config.ytdlpPath, extraArgs: config.ytdlpArgs, log });
+  // Cloud mode: library, uploads, media and YouTube live on the home Pi (see home-tunnel.js).
+  const tunnel = config.remoteHome ? new HomeTunnel({ log }) : null;
+  let library;
+  let youtube;
+  if (tunnel) {
+    library = new RemoteLibrary(tunnel);
+    youtube = null; // every /api/youtube request is forwarded to the Pi
+  } else {
+    library = new Library({
+      dir: config.libraryDir,
+      indexFile: path.join(config.dataDir, 'library-index.json'),
+      maxUploadBytes: config.maxUploadMb * 1024 * 1024,
+      log,
+    });
+    await library.init();
+    youtube = new YouTube({ bin: config.ytdlpPath, extraArgs: config.ytdlpArgs, log });
+  }
 
   // Bridges get paths relative to the hub (they know the hub URL); plain URLs pass through.
   const mediaUrl = (item) =>
     item.kind === 'track' ? `/media/tracks/${item.ref}` : item.kind === 'youtube' ? `/media/youtube/${item.ref}` : item.ref;
   const zones = new ZoneManager({ store, mediaUrl, log });
+
+  // Cloud mode: the home Pi keeps a backup of speakers and queues, because free cloud
+  // hosting starts with an empty disk after every restart. Bridges wait until it's restored.
+  let homeReady = Promise.resolve();
+  if (tunnel) {
+    const flush = store.flush.bind(store);
+    store.flush = () => {
+      flush();
+      tunnel.send({ type: 'state-save', state: store.data });
+    };
+    let restored = false;
+    homeReady = new Promise((resolve) => {
+      const done = () => {
+        restored = true;
+        resolve();
+      };
+      setTimeout(done, config.homeWaitMs ?? 25_000).unref();
+      tunnel.on('hello', (msg) => {
+        if (!restored && msg.state && !Object.keys(store.data.zones).length) zones.restore(msg.state);
+        if (restored) tunnel.send({ type: 'state-save', state: store.data });
+        done();
+      });
+    });
+  }
 
   const authorized = (req) => {
     if (!config.token) return true;
@@ -46,9 +80,17 @@ export async function createHub(overrides = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.set('etag', false);
+  if (tunnel) {
+    // Before the JSON parser: these carry streams (uploads, audio) straight through.
+    app.get('/home/tunnel/:rid/body', requireAuth, tunnel.handleBodyRequest);
+    app.post('/home/tunnel/:rid/response', requireAuth, tunnel.handleResponse);
+    app.use(['/api/library', '/api/youtube', '/api/system', '/media'], requireAuth, tunnel.forward);
+  }
   app.use(express.json({ limit: '2mb' }));
 
-  app.get('/api/health', (_req, res) => res.json({ ok: true, version: VERSION, auth: Boolean(config.token), demo: Boolean(config.demo) }));
+  const homeStatus = () => (tunnel ? { online: tunnel.online, lastSeen: tunnel.lastSeen } : null);
+  app.get('/api/health', (_req, res) =>
+    res.json({ ok: true, version: VERSION, auth: Boolean(config.token), demo: Boolean(config.demo), home: homeStatus() }));
   app.use('/api', requireAuth, createApi({ zones, library, youtube }));
 
   // Media endpoints read by the bridges (and by the browser for previews).
@@ -90,12 +132,21 @@ export async function createHub(overrides = {}) {
 
   server.on('upgrade', (req, socket, head) => {
     const { pathname } = new URL(req.url, 'http://x');
-    if ((pathname !== '/ws/ui' && pathname !== '/ws/agent') || !authorized(req)) {
+    if (!['/ws/ui', '/ws/agent', '/ws/home'].includes(pathname) || (pathname === '/ws/home' && !tunnel) || !authorized(req)) {
       socket.write(`HTTP/1.1 ${authorized(req) ? '404 Not Found' : '401 Unauthorized'}\r\nConnection: close\r\n\r\n`);
       socket.destroy();
       return;
     }
-    wss.handleUpgrade(req, socket, head, (ws) => (pathname === '/ws/ui' ? onUi(ws) : onAgent(ws, req)));
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      if (pathname === '/ws/ui') onUi(ws);
+      else if (pathname === '/ws/agent') onAgent(ws, req);
+      else {
+        ws.isAlive = true;
+        ws.on('pong', () => (ws.isAlive = true));
+        ws.on('error', () => {});
+        tunnel.attach(ws, clientAddress(req));
+      }
+    });
   });
 
   const sendJson = (ws, msg) => {
@@ -112,7 +163,7 @@ export async function createHub(overrides = {}) {
     ws.on('pong', () => (ws.isAlive = true));
     ws.on('close', () => uiClients.delete(ws));
     ws.on('error', () => {});
-    sendJson(ws, { type: 'snapshot', zones: zones.list(), version: VERSION });
+    sendJson(ws, { type: 'snapshot', zones: zones.list(), version: VERSION, home: homeStatus() });
   }
 
   function onAgent(ws, req) {
@@ -122,12 +173,12 @@ export async function createHub(overrides = {}) {
     let zoneId = null;
     const handle = {
       // Behind a proxy (Render, site.js) the bridge's real address is in X-Forwarded-For.
-      address: (req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress)?.replace(/^::ffff:/, '') ?? null,
+      address: clientAddress(req),
       send: (msg) => sendJson(ws, msg),
       close: (code, reason) => ws.close(code, reason),
     };
     const helloTimer = setTimeout(() => ws.close(4000, 'No hello received'), 10_000);
-    ws.on('message', (data) => {
+    ws.on('message', async (data) => {
       let msg;
       try {
         msg = JSON.parse(data.toString());
@@ -137,6 +188,8 @@ export async function createHub(overrides = {}) {
       if (!zoneId) {
         if (msg.type !== 'hello') return;
         clearTimeout(helloTimer);
+        await homeReady;
+        if (ws.readyState !== ws.OPEN) return;
         try {
           zoneId = zones.attachAgent(msg, handle);
           sendJson(ws, { type: 'welcome', zone: zoneId, version: VERSION });
@@ -181,6 +234,8 @@ export async function createHub(overrides = {}) {
   });
   zones.on('removed', (id) => broadcast({ type: 'zone-removed', id }));
   library.on('changed', () => broadcast({ type: 'library' }));
+  tunnel?.on('online', () => broadcast({ type: 'home', home: homeStatus() }));
+  tunnel?.on('offline', () => broadcast({ type: 'home', home: homeStatus() }));
 
   // listen: false = don't open a port; a front server (site.js) hands requests to `server`.
   let port = null;
@@ -210,6 +265,11 @@ export async function createHub(overrides = {}) {
   }
 
   return { config, log, server, port, zones, library, youtube, store, close };
+}
+
+// Behind a proxy (Render, site.js) the real client address is in X-Forwarded-For.
+function clientAddress(req) {
+  return (req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress)?.replace(/^::ffff:/, '') ?? null;
 }
 
 function safeEqual(a, b) {

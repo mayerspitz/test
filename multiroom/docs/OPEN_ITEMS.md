@@ -1,7 +1,7 @@
 # Open items
 
 What's still open for the Home Audio project, and whose turn it is. This is updated as we go.
-_Last updated: 2026-09-28 (round 2)_
+_Last updated: 2026-09-28 (round 3)_
 
 > **Hardware and setup are being finalized in [PLAN_DISCUSSION.md](PLAN_DISCUSSION.md).** It compares the earlier agent's handoff (10 speakers, one central Pi with 10 USB Bluetooth adapters, 500 GB SSD) with this build, and lists questions Q-A to Q-I. Nothing from the handoff counts as decided until you confirm it there.
 
@@ -22,7 +22,19 @@ _Last updated: 2026-09-28 (round 2)_
 | **Hub fully in the cloud (Render)**; the home Pi connects out over Wi-Fi (5 GHz) | Details and choices: [PLAN_DISCUSSION.md §6](PLAN_DISCUSSION.md#6-cloud-design-whats-decided-and-what-needs-your-choice) |
 | `demo.<domain>` and `app.<domain>` served by one Render service | Built (`npm run site`); needs a domain and the Starter plan to go live |
 
+| **Round 3 (2026-09-28): cloud app on the Render free plan; music stays on the Pi's SSD** | Chosen over cloud storage; a minute's delay after a restart is fine |
+| One address: the real app at `/`, the demo at `/demo/` | No domain needed |
+| One login with a fixed password | Stored as `MULTIROOM_TOKEN` in Render, not in git |
+| Strong 5 GHz Wi-Fi for the Pi | |
+| Any Bluetooth speaker ("universal") | Only standard Bluetooth audio (A2DP); no brand-specific features |
+| YouTube Music fetched by the Pi (home internet), and a 3-adapter pilot first | Accepted as proposed |
+
 ## Done since the last update
+
+- **Cloud mode:** the cloud app handles control, and the home Pi handles the music, speakers and YouTube, over an outgoing connection
+  - The Pi backs up speakers and queues and restores them after a free-plan restart (tested: the song keeps playing)
+  - Keep-alive pings every 10 minutes; a "Home Pi offline" banner in the app
+- `deploy/install-home.sh` + `deploy/home-speaker.sh`, and the guide [SETUP_CLOUD.md](SETUP_CLOUD.md)
 
 - 🎧 **Preview on this phone:** every song in the picker and the library can be heard on the phone only, before it goes to a speaker
 - 🎧 on a speaker card: listen along to what that speaker is playing
@@ -43,7 +55,9 @@ _Last updated: 2026-09-28 (round 2)_
 | Q8 | Control from outside the house: OK to use Tailscale (free, no port forwarding)? | Remote access design | ⏳ waiting for you |
 | Q10 | Demo + production on one Render app | Architecture | ✅ answered: fully cloud. Domain and plan are still open (R2, R3) |
 | Q11 | 6 or 10 speakers; central box or bridges | Main hardware decision | ✅ answered: one central Pi, capacity for 10 |
-| R1–R8 | **Round-2 questions:** library storage (S1/S2/S3), domain, paid plan, Pi location and 5 GHz Wi-Fi, login, YouTube via the Pi, pilot, speaker models. See [PLAN_DISCUSSION.md](PLAN_DISCUSSION.md#questions-to-settle-in-order) | Unblocks the cloud go-live and the parts order | ⏳ waiting for you |
+| R1–R8 | Round-2 questions | | ✅ answered (round 3), except the speaker models, which come later |
+| R9 | Your current speakers (models, how many), whenever convenient | Pilot planning; the design already works with any speaker | ⏳ later |
+| R10 | Before ordering: approve the final parts list (Pi 4 4 GB, 500 GB SSD, multi-TT powered hub, UB500 ×3 for the pilot, cables) | I'll shortlist exact models and prices next | ⏳ next step |
 | Q9 | Features you'd like next, if any (see the backlog below) | Scope of the next round | ⏳ waiting for you |
 
 ## To do: needs real hardware (first pilot: 1 hub + 1 bridge + 1 speaker)

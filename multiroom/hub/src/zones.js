@@ -461,6 +461,16 @@ export class ZoneManager extends EventEmitter {
     for (const id of Object.keys(this.zones)) if (this.zones[id].state !== 'stopped') this.stop(id);
   }
 
+  // Cloud mode: bring back speakers and queues from the home Pi's backup after the
+  // cloud service restarted with an empty disk.
+  restore(data) {
+    this.store.data.zones = structuredClone(data?.zones ?? {});
+    for (const z of Object.values(this.zones)) this.#normalize(z);
+    this.store.save();
+    for (const id of Object.keys(this.zones)) this.emit('zone', id);
+    this.log.info(`Restored ${Object.keys(this.zones).length} speakers from the home Pi's backup`);
+  }
+
   close() {
     clearInterval(this.saveTimer);
   }

@@ -94,11 +94,15 @@ export class Agent {
     }
   }
 
-  // Media from the hub gets the access token; external URLs never do.
+  // Media from the hub gets the access token; external URLs never do. In cloud mode,
+  // hub media (/media/...) is played from the local music server on this Pi instead.
   #resolve(raw) {
-    const u = new URL(raw, this.hubBase);
-    const sameOrigin = u.origin === this.hubBase.origin;
-    return { url: u.toString(), headers: sameOrigin && this.cfg.token ? [`Authorization: Bearer ${this.cfg.token}`] : [] };
+    const local = this.cfg.mediaBase && raw.startsWith('/media/');
+    const base = local ? new URL(this.cfg.mediaBase) : this.hubBase;
+    const token = local ? this.cfg.mediaToken ?? '' : this.cfg.token;
+    const u = new URL(raw, base);
+    const sameOrigin = u.origin === base.origin;
+    return { url: u.toString(), headers: sameOrigin && token ? [`Authorization: Bearer ${token}`] : [] };
   }
 
   // Playback only runs while the hub says "play" AND the speaker is connected —

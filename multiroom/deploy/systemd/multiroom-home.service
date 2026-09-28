@@ -1,0 +1,15 @@
+# User service (shares the login session with PipeWire): the home Pi in cloud mode.
+#   systemctl --user enable --now multiroom-home
+[Unit]
+Description=Multiroom home Pi (music library, speakers, link to the cloud app)
+Wants=pipewire.service wireplumber.service pipewire-pulse.service network-online.target
+After=pipewire.service wireplumber.service pipewire-pulse.service network-online.target
+
+[Service]
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=@NODE@ @DIR@/hub/src/home.js --config %h/.config/multiroom/home.json
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

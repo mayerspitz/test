@@ -211,3 +211,4 @@ input[type=range]:disabled { opacity: 0.4; }
 .demo-banner svg { width: 15px; height: 15px; vertical-align: -3px; color: var(--accent); }
 #preview-bar { position: fixed; left: 12px; right: 12px; bottom: calc(var(--tabbar-h) + var(--safe-b) + 10px); z-index: 55; max-width: 736px; margin: 0 auto; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 6px 6px 6px 14px; border-radius: 16px; background: var(--bg-raised); border: 1px solid var(--accent); box-shadow: var(--shadow); }
 #preview-bar > svg { color: var(--accent); }
+.warn-banner { background: color-mix(in srgb, var(--warn) 14%, transparent); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }

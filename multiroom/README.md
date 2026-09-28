@@ -59,6 +59,7 @@ Open the printed address on your phone (same Wi-Fi) or at `http://localhost:8080
 | [docs/SETUP.md](docs/SETUP.md) | Step-by-step install: hub, music import, pairing, bridges, phone, remote access, YouTube Music |
 | [docs/VERIFY_EXISTING_SYSTEM.md](docs/VERIFY_EXISTING_SYSTEM.md) | Check whether your current whole-home system can really play a different song per room, and why upstairs might differ |
 | [docs/API.md](docs/API.md) | REST + WebSocket reference for building your own mobile or web app |
+| [docs/SETUP_CLOUD.md](docs/SETUP_CLOUD.md) | **The chosen setup:** cloud app on Render plus one home Pi (music on its SSD, all speakers) |
 | [docs/PLAN_DISCUSSION.md](docs/PLAN_DISCUSSION.md) | **Hardware/setup options under discussion** (central box vs bridges, 6 vs 10 speakers, demo/production hosting) |
 | [docs/OPEN_ITEMS.md](docs/OPEN_ITEMS.md) | Open questions, pending hardware tests, and the feature backlog |
 

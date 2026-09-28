@@ -27,46 +27,7 @@ sudo apt-get install -y ca-certificates curl unzip
 ensure_node
 npm_install_workspace hub
 
-if [ "$YOUTUBE" = 1 ]; then
-  # Official yt-dlp release binaries bundle the YouTube JS challenge solver (yt-dlp-ejs);
-  # Deno is the JavaScript runtime yt-dlp uses for it. Distro packages are too old.
-  case "$(uname -m)" in
-    x86_64) YTDLP_ASSET=yt-dlp_linux ;;
-    aarch64|arm64) YTDLP_ASSET=yt-dlp_linux_aarch64 ;;
-    armv7l) YTDLP_ASSET=yt-dlp_linux_armv7l ;;
-    *) YTDLP_ASSET=yt-dlp ;; # zipimport build, needs python3
-  esac
-  say "Installing yt-dlp ($YTDLP_ASSET)"
-  [ "$YTDLP_ASSET" = yt-dlp ] && sudo apt-get install -y python3
-  sudo curl -fL --retry 3 -o /usr/local/bin/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/$YTDLP_ASSET"
-  sudo chmod 755 /usr/local/bin/yt-dlp
-  # yt-dlp needs a JavaScript runtime for YouTube: Deno (preferred) or Node.js 22+.
-  case "$(uname -m)" in
-    x86_64) DENO_ASSET=deno-x86_64-unknown-linux-gnu.zip ;;
-    aarch64|arm64) DENO_ASSET=deno-aarch64-unknown-linux-gnu.zip ;;
-    *) DENO_ASSET="" ;;
-  esac
-  JS_RUNTIME_ARGS=""
-  if command -v deno >/dev/null; then
-    say "Deno $(deno --version | head -1) already installed"
-  elif [ -n "$DENO_ASSET" ]; then
-    say "Installing Deno (JavaScript runtime yt-dlp uses for YouTube)"
-    tmp="$(mktemp -d)"
-    curl -fL --retry 3 -o "$tmp/deno.zip" "https://github.com/denoland/deno/releases/latest/download/$DENO_ASSET"
-    unzip -o -q "$tmp/deno.zip" -d "$tmp"
-    sudo install -m 755 "$tmp/deno" /usr/local/bin/deno
-    rm -rf "$tmp"
-  elif [ "$(node -p 'process.versions.node.split(".")[0]')" -ge 22 ]; then
-    JS_RUNTIME_ARGS="--js-runtimes node"
-    warn "No Deno build for $(uname -m); yt-dlp will use Node.js instead."
-  else
-    warn "No JavaScript runtime for yt-dlp on $(uname -m): use a 64-bit OS for YouTube Music."
-  fi
-  # YouTube changes often; keep yt-dlp current automatically.
-  printf '#!/bin/sh\n/usr/local/bin/yt-dlp -U >/dev/null 2>&1 || true\n' | sudo tee /etc/cron.daily/multiroom-yt-dlp >/dev/null
-  sudo chmod 755 /etc/cron.daily/multiroom-yt-dlp
-  yt-dlp --version
-fi
+[ "$YOUTUBE" = 1 ] && install_ytdlp
 
 say "Preparing data folder $DATA_DIR"
 sudo mkdir -p "$DATA_DIR/library"

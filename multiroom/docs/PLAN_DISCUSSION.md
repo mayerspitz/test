@@ -12,6 +12,17 @@ You mentioned that your thinking has changed since the handoff. So wherever they
 
 ---
 
+## 0a. Round 3: final answers (2026-09-28)
+
+| You said | Result |
+|---|---|
+| The cloud app controls everything, on the **free** plan; **the Pi keeps the data on its SSD**; waiting a few minutes for a change is fine | Storage **S3** (§6): $0/month. **Built:** cloud mode, where the Pi connects out, backs up the cloud's state and keeps it awake. See [SETUP_CLOUD.md](SETUP_CLOUD.md). |
+| Strong Wi-Fi | The Pi uses 5 GHz Wi-Fi |
+| No domain: use the regular address, with `/demo` for the demo | **Built:** `/` = the real app, `/demo/` = the demo |
+| One login, fixed password | **Built:** one password, stored in the Render settings (not in the code) |
+| Speakers are mixed; design for any speaker | Only standard Bluetooth audio (A2DP) is used, and the speaker's volume is never touched. Models to share later. |
+| Everything else as suggested | YouTube via the Pi, the 3-adapter pilot, capacity for 10 |
+
 ## 0. Round 2: your answers (2026-09-28)
 
 | You said | What it means |

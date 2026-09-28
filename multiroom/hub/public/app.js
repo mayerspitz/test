@@ -121,15 +121,19 @@ function toast(msg, isError = false) {
   toastTimer = setTimeout(() => (el.className = ''), isError ? 4500 : 2200);
 }
 
+// The same app runs at / (your real system) and under /demo (the demo).
+const BASE = /^\/demo(\/|$)/.test(location.pathname) ? '/demo' : '';
+
 // ------------------------------------------------------------------ state --
 const state = {
-  token: storage.get('multiroom.token', ''),
+  token: storage.get(`multiroom.token${BASE}`, ''),
   tab: storage.get('multiroom.tab', 'speakers'),
   zones: new Map(),
   collections: null,
   youtube: null,
   hubVersion: null,
   demo: false,
+  home: null, // cloud mode: { online, lastSeen } of the home Pi
   monitor: null, // id of the speaker this phone is listening to
 };
 const zoneListeners = new Set();
@@ -140,19 +144,21 @@ async function api(path, { method = 'GET', body } = {}) {
   const headers = {};
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
-  const res = await fetch(`/api${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const res = await fetch(`${BASE}/api${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   const data = await res.json().catch(() => null);
   if (res.status === 401) {
-    showLogin('Please enter the access token.');
-    throw new Error('Access token required');
+    showLogin('Please enter the password.');
+    throw new Error('Password required');
   }
   if (!res.ok) throw new Error(data?.error || `Hub error ${res.status}`);
   return data;
 }
 
 function withToken(url) {
-  if (!url || !url.startsWith('/') || !state.token) return url;
-  return `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(state.token)}`;
+  if (!url || !url.startsWith('/')) return url;
+  const full = BASE + url;
+  if (!state.token) return full;
+  return `${full}${full.includes('?') ? '&' : '?'}token=${encodeURIComponent(state.token)}`;
 }
 
 function stamp(z) {
@@ -306,7 +312,7 @@ let wsDelay = 1000;
 function connectWs() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   const q = state.token ? `?token=${encodeURIComponent(state.token)}` : '';
-  ws = new WebSocket(`${proto}//${location.host}/ws/ui${q}`);
+  ws = new WebSocket(`${proto}//${location.host}${BASE}/ws/ui${q}`);
   ws.onopen = () => {
     wsDelay = 1000;
     setConn('ok', 'Live');
@@ -316,10 +322,14 @@ function connectWs() {
     if (m.type === 'snapshot') {
       state.zones = new Map(m.zones.map((z) => [z.id, stamp(z)]));
       state.hubVersion = m.version;
+      state.home = m.home ?? null;
       render();
       syncMonitor();
     } else if (m.type === 'zone') {
       upsertZone(m.zone);
+    } else if (m.type === 'home') {
+      state.home = m.home;
+      if (state.tab === 'speakers') render();
     } else if (m.type === 'zone-removed') {
       state.zones.delete(m.id);
       render();
@@ -383,8 +393,15 @@ function renderSpeakers() {
       h('div', { class: 'empty' },
         icon('speaker'),
         h('h2', null, 'No speakers yet'),
-        h('p', null, 'Each speaker appears here as soon as its bridge connects to this hub.'),
-        h('p', { class: 'muted' }, 'Set one up with ', h('code', null, 'deploy/install-agent.sh'), ' — or try everything first with ', h('code', null, 'npm run demo'), '.'),
+        ...(state.home
+          ? [
+              h('p', null, state.home.online ? 'Your home Pi is connected. Add speakers to its configuration and they appear here.' : 'Waiting for your home Pi to connect.'),
+              h('p', { class: 'muted' }, 'Set it up with ', h('code', null, 'deploy/install-home.sh'), '. Meanwhile, try the ', h('a', { href: '/demo/' }, 'demo'), '.'),
+            ]
+          : [
+              h('p', null, 'Each speaker appears here as soon as its bridge connects to this hub.'),
+              h('p', { class: 'muted' }, 'Set one up with ', h('code', null, 'deploy/install-agent.sh'), ' — or try everything first with ', h('code', null, 'npm run demo'), '.'),
+            ]),
       ),
     );
     return;
@@ -397,6 +414,11 @@ function renderSpeakers() {
       h('button', { class: 'btn small', onclick: () => api('/zones/pause-all', { method: 'POST' }).catch((e) => toast(e.message, true)) }, icon('pause'), 'Pause all'),
     );
     grid = h('div', { class: 'zones' });
+    if (state.home && !state.home.online) {
+      view.append(h('div', { class: 'demo-banner warn-banner' },
+        h('strong', null, 'Home Pi offline. '),
+        `Last seen ${ago(state.home.lastSeen)}. Speakers, the library and uploads come back as soon as it reconnects.`));
+    }
     if (state.demo) {
       view.append(h('div', { class: 'demo-banner' },
         h('strong', null, 'Demo hub. '),
@@ -1163,7 +1185,7 @@ function xhrUpload(files, collection, onProgress) {
     const fd = new FormData();
     for (const f of files) fd.append('files', f, f.webkitRelativePath || f.name);
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `/api/library/upload?collection=${encodeURIComponent(collection)}`);
+    xhr.open('POST', `${BASE}/api/library/upload?collection=${encodeURIComponent(collection)}`);
     if (state.token) xhr.setRequestHeader('Authorization', `Bearer ${state.token}`);
     xhr.upload.onprogress = (e) => onProgress(e.loaded);
     xhr.onload = () => {
@@ -1180,7 +1202,7 @@ function xhrUpload(files, collection, onProgress) {
 // --------------------------------------------------------------- settings --
 async function renderSettings() {
   const view = $('#view');
-  const token = h('input', { class: 'field', type: 'password', value: state.token, placeholder: 'Access token (if the hub has one)', autocomplete: 'current-password' });
+  const token = h('input', { class: 'field', type: 'password', value: state.token, placeholder: 'Password', autocomplete: 'current-password' });
   const about = h('dl', { class: 'kv' });
   view.replaceChildren(
     h('div', { class: 'section-title' }, 'All speakers'),
@@ -1188,13 +1210,13 @@ async function renderSettings() {
       h('button', { class: 'btn', onclick: () => api('/zones/pause-all', { method: 'POST' }).then(() => toast('Paused everything'), (e) => toast(e.message, true)) }, icon('pause'), 'Pause all'),
       h('button', { class: 'btn danger', onclick: () => api('/zones/stop-all', { method: 'POST' }).then(() => toast('Stopped everything'), (e) => toast(e.message, true)) }, 'Stop all'),
     ),
-    h('div', { class: 'section-title' }, 'Access'),
+    h('div', { class: 'section-title' }, 'Password'),
     h('div', { class: 'card pane' },
       token,
       h('div', null, h('button', { class: 'btn primary', onclick: async () => {
         await saveToken(token.value.trim());
-      } }, 'Save token')),
-      h('p', { class: 'hint', style: 'margin:0' }, 'Set MULTIROOM_TOKEN on the hub to require it. Bridges use the same token.'),
+      } }, 'Save password')),
+      h('p', { class: 'hint', style: 'margin:0' }, 'The app password (MULTIROOM_TOKEN on the server). The home Pi uses the same one.'),
     ),
     h('div', { class: 'section-title' }, 'About this hub'),
     h('div', { class: 'card' }, about),
@@ -1222,10 +1244,10 @@ async function renderSettings() {
 
 async function saveToken(value) {
   state.token = value;
-  storage.set('multiroom.token', value);
+  storage.set(`multiroom.token${BASE}`, value);
   try {
     await api('/zones');
-    toast('Token saved');
+    toast('Password saved');
     if (ws) ws.close();
     else connectWs();
     render();
@@ -1239,14 +1261,14 @@ let loginShown = false;
 function showLogin(message) {
   if (loginShown) return;
   loginShown = true;
-  const token = h('input', { class: 'field', type: 'password', placeholder: 'Access token', autocomplete: 'current-password' });
+  const token = h('input', { class: 'field', type: 'password', placeholder: 'Password', autocomplete: 'current-password' });
   const submit = async (e) => {
     e.preventDefault();
     state.token = token.value.trim();
-    storage.set('multiroom.token', state.token);
+    storage.set(`multiroom.token${BASE}`, state.token);
     try {
-      const r = await fetch('/api/zones', { headers: { Authorization: `Bearer ${state.token}` } });
-      if (!r.ok) throw new Error('That token was not accepted');
+      const r = await fetch(`${BASE}/api/zones`, { headers: { Authorization: `Bearer ${state.token}` } });
+      if (!r.ok) throw new Error('Wrong password');
       loginShown = false;
       connectWs();
       render();
@@ -1256,7 +1278,7 @@ function showLogin(message) {
   };
   $('#view').replaceChildren(
     h('form', { class: 'card pane', style: 'margin-top:24px', onsubmit: submit },
-      h('h2', { style: 'margin:0' }, 'Connect to your hub'),
+      h('h2', { style: 'margin:0' }, 'Home Audio'),
       h('p', { class: 'muted', style: 'margin:0' }, message),
       token,
       h('button', { class: 'btn primary', type: 'submit' }, 'Continue'),
@@ -1267,7 +1289,7 @@ function showLogin(message) {
 
 // ------------------------------------------------------------------- boot --
 async function boot() {
-  const health = await fetch('/api/health').then((r) => r.json()).catch(() => null);
+  const health = await fetch(`${BASE}/api/health`).then((r) => r.json()).catch(() => null);
   if (!health) {
     setConn('bad', 'Hub unreachable');
     setTimeout(boot, 3000);
@@ -1275,9 +1297,9 @@ async function boot() {
   }
   state.demo = Boolean(health.demo);
   if (health.auth) {
-    const ok = state.token && (await fetch('/api/zones', { headers: { Authorization: `Bearer ${state.token}` } })).ok;
+    const ok = state.token && (await fetch(`${BASE}/api/zones`, { headers: { Authorization: `Bearer ${state.token}` } })).ok;
     if (!ok) {
-      showLogin('This hub is protected. Enter the access token (MULTIROOM_TOKEN) once — this phone will remember it.');
+      showLogin('Enter the password once — this phone will remember it.');
       return;
     }
   }
