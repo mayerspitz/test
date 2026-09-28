@@ -30,6 +30,7 @@ export function loadConfig(overrides = {}) {
     ytdlpArgs: toArgList(pick('ytdlpArgs', 'YTDLP_ARGS', [])),
     maxUploadMb: Number(pick('maxUploadMb', 'MULTIROOM_MAX_UPLOAD_MB', 1024)),
     quiet: Boolean(pick('quiet', 'MULTIROOM_QUIET', false)),
+    demo: Boolean(overrides.demo),
   };
 }
 

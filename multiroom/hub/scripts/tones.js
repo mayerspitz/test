@@ -3,15 +3,25 @@ import path from 'node:path';
 
 // Writes a small mono 16-bit WAV with a soft chord, plus RIFF INFO tags
 // (title/artist/album) so the library shows real metadata. Used by the demo and tests.
-export function writeToneWav(file, { seconds = 5, freqs = [440], rate = 8000, title, artist, album } = {}) {
+export function writeToneWav(file, { seconds = 5, freqs = [440], rate = 8000, title, artist, album, arpeggio = false, tempo = 0.3 } = {}) {
   const samples = Math.round(seconds * rate);
   const data = Buffer.alloc(samples * 2);
   for (let i = 0; i < samples; i++) {
     const t = i / rate;
     const env = Math.min(1, t * 4, (seconds - t) * 4);
     let v = 0;
-    for (const f of freqs) v += Math.sin(2 * Math.PI * f * t);
-    data.writeInt16LE(Math.round((v / freqs.length) * env * 0.25 * 32767), i * 2);
+    if (arpeggio) {
+      // A plucked arpeggio over a soft bass note, so demo tracks sound a bit like music.
+      const step = Math.floor(t / tempo);
+      const into = t - step * tempo;
+      const pattern = [0, 1, 2, 1, 0, 2, 1, 2];
+      const f = freqs[pattern[step % 8] % freqs.length] * (step % 32 >= 16 ? 2 : 1);
+      v = Math.sin(2 * Math.PI * f * t) * Math.exp(-into * 7) * 0.8 + Math.sin(Math.PI * freqs[0] * t) * 0.3;
+    } else {
+      for (const f of freqs) v += Math.sin(2 * Math.PI * f * t);
+      v /= freqs.length;
+    }
+    data.writeInt16LE(Math.round(v * env * 0.3 * 32767), i * 2);
   }
   const info = [
     ['INAM', title],

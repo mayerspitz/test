@@ -1,0 +1,16 @@
+# Render blueprint for the public DEMO of the multiroom hub (simulated speakers, sample music).
+# Real installs run on your own hardware — see multiroom/docs/SETUP.md.
+services:
+  - type: web
+    name: home-audio-demo
+    runtime: node
+    plan: free
+    branch: claude/upbeat-edison-2k76xq
+    buildCommand: cd multiroom && npm ci --omit=dev -w hub -w agent
+    startCommand: cd multiroom && npm run demo
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: MULTIROOM_MAX_UPLOAD_MB
+        value: "25"

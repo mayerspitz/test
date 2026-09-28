@@ -49,6 +49,7 @@ const ICONS = {
   chevron: ['', '<path d="m9 18 6-6-6-6"/>'],
   speaker: ['', '<rect x="6" y="3" width="12" height="18" rx="2.5"/><circle cx="12" cy="14" r="3.2"/><circle cx="12" cy="7.2" r="1.1"/>'],
   radio: ['', '<circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4"/><path d="M7.8 16.2a6 6 0 0 1 0-8.4"/><path d="M19.1 4.9a10 10 0 0 1 0 14.2"/><path d="M4.9 19.1a10 10 0 0 1 0-14.2"/>'],
+  headphones: ['', '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3z"/><path d="M3 19a2 2 0 0 0 2 2h1v-6H3z"/>'],
   'play-next': ['', '<path d="M3 6h12"/><path d="M3 12h8"/><path d="M3 18h8"/><path d="M15 12h6"/><path d="m18 9 3 3-3 3"/>'],
 };
 
@@ -128,6 +129,8 @@ const state = {
   collections: null,
   youtube: null,
   hubVersion: null,
+  demo: false,
+  monitor: null, // id of the speaker this phone is listening to
 };
 const zoneListeners = new Set();
 const libraryListeners = new Set();
@@ -162,6 +165,54 @@ function upsertZone(z) {
   state.zones.set(z.id, stamp(z));
   if (state.tab === 'speakers') renderSpeakers();
   for (const fn of zoneListeners) fn(z, prev);
+  if (z.id === state.monitor) syncMonitor();
+}
+
+// ---- "Listen on this phone": plays what a speaker plays, in the browser --------
+// Handy for trying the system out (and for checking a room without walking there).
+// Follows the speaker's track, pause state, position and stream volume.
+const monitorAudio = new Audio();
+monitorAudio.preload = 'auto';
+let monitorUid = null;
+
+function mediaUrlOf(item) {
+  if (item.kind === 'track') return withToken(`/media/tracks/${item.ref}`);
+  if (item.kind === 'youtube') return withToken(`/media/youtube/${item.ref}`);
+  return item.ref;
+}
+
+function toggleMonitor(id) {
+  state.monitor = state.monitor === id ? null : id;
+  monitorUid = null;
+  if (!state.monitor) {
+    monitorAudio.pause();
+    monitorAudio.removeAttribute('src');
+    monitorAudio.load();
+  } else {
+    toast(`Listening to ${state.zones.get(id)?.name ?? id} on this phone`);
+  }
+  syncMonitor();
+  if (state.tab === 'speakers') renderSpeakers();
+}
+
+function syncMonitor() {
+  const z = state.monitor && state.zones.get(state.monitor);
+  if (!z) return;
+  const cur = z.current;
+  monitorAudio.volume = Math.pow(z.volume / 100, 3); // same cubic curve as the bridges (mpv)
+  if (!cur || z.state === 'stopped') {
+    monitorAudio.pause();
+    return;
+  }
+  if (cur.uid !== monitorUid) {
+    monitorUid = cur.uid;
+    monitorAudio.src = mediaUrlOf(cur);
+    monitorAudio.currentTime = z.position || 0;
+  } else if (z.duration && Math.abs(monitorAudio.currentTime - z.position) > 2.5) {
+    monitorAudio.currentTime = z.position;
+  }
+  if (z.state === 'playing' && z.playback === 'playing') monitorAudio.play().catch(() => {});
+  else monitorAudio.pause();
 }
 
 async function zoneCmd(id, action, body, method = 'POST') {
@@ -206,6 +257,7 @@ function connectWs() {
       state.zones = new Map(m.zones.map((z) => [z.id, stamp(z)]));
       state.hubVersion = m.version;
       render();
+      syncMonitor();
     } else if (m.type === 'zone') {
       upsertZone(m.zone);
     } else if (m.type === 'zone-removed') {
@@ -285,6 +337,12 @@ function renderSpeakers() {
       h('button', { class: 'btn small', onclick: () => api('/zones/pause-all', { method: 'POST' }).catch((e) => toast(e.message, true)) }, icon('pause'), 'Pause all'),
     );
     grid = h('div', { class: 'zones' });
+    if (state.demo) {
+      view.append(h('div', { class: 'demo-banner' },
+        h('strong', null, 'Demo hub. '),
+        'The speakers here are simulated, and the sample songs are generated tones. Tap ', icon('headphones'),
+        ' on a speaker to hear it on this phone. Anyone with this link shares the same demo.'));
+    }
     view.append(bar, grid);
   }
   for (const z of zones) {
@@ -365,7 +423,7 @@ function createCard(id) {
   c.queueCount = h('span');
   c.error = h('div', { class: 'error hidden' });
   c.root = h('section', { class: 'zone', 'aria-label': id },
-    h('div', { class: 'zone-head' }, c.name, iconBtn('more', 'Speaker options', () => openZoneMenu(id))),
+    h('div', { class: 'zone-head' }, c.name, c.listen = iconBtn('headphones', 'Listen on this phone', () => toggleMonitor(id)), iconBtn('more', 'Speaker options', () => openZoneMenu(id))),
     c.chips,
     h('div', { class: 'now' }, c.art, h('div', { class: 'meta' }, c.title, c.artist, c.nextUp)),
     h('div', { class: 'progress playing-only' }, c.elapsed, c.seek, c.total),
@@ -386,6 +444,8 @@ function chip(kind, iconName, text) {
 
 function updateCard(c, z) {
   c.name.textContent = z.name;
+  c.listen.classList.toggle('on', state.monitor === z.id);
+  c.listen.setAttribute('aria-pressed', String(state.monitor === z.id));
   c.root.classList.toggle('offline', !z.online);
   c.root.classList.toggle('idle', !z.queueLength);
 
@@ -1148,6 +1208,7 @@ async function boot() {
     setTimeout(boot, 3000);
     return;
   }
+  state.demo = Boolean(health.demo);
   if (health.auth) {
     const ok = state.token && (await fetch('/api/zones', { headers: { Authorization: `Bearer ${state.token}` } })).ok;
     if (!ok) {

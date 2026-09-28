@@ -48,7 +48,7 @@ export async function createHub(overrides = {}) {
   app.set('etag', false);
   app.use(express.json({ limit: '2mb' }));
 
-  app.get('/api/health', (_req, res) => res.json({ ok: true, version: VERSION, auth: Boolean(config.token) }));
+  app.get('/api/health', (_req, res) => res.json({ ok: true, version: VERSION, auth: Boolean(config.token), demo: Boolean(config.demo) }));
   app.use('/api', requireAuth, createApi({ zones, library, youtube }));
 
   // Media endpoints read by the bridges (and by the browser for previews).

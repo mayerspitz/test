@@ -206,3 +206,6 @@ input[type=range]:disabled { opacity: 0.4; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+.demo-banner { background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); border-radius: 14px; padding: 10px 14px; font-size: 13px; margin: 4px 0 12px; line-height: 1.5; }
+.demo-banner svg { width: 15px; height: 15px; vertical-align: -3px; color: var(--accent); }

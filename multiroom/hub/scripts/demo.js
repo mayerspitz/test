@@ -46,8 +46,10 @@ function makeLibrary() {
       const root = notes[(ci * 3 + si) % notes.length];
       writeToneWav(path.join(dir, `${String(si + 1).padStart(2, '0')} ${title}.wav`), {
         seconds: 95 + ((ci * 37 + si * 23) % 120),
-        rate: 2000,
-        freqs: [root, root * 1.25, root * 1.5],
+        rate: 8000,
+        arpeggio: true,
+        tempo: [0.3, 0.22, 0.26, 0.4][ci],
+        freqs: si % 2 ? [root, root * 1.2, root * 1.5] : [root, root * 1.25, root * 1.5],
         title,
         artist: col.artist,
         album: col.name.replace(' MP3 player', ' mix'),
@@ -57,7 +59,7 @@ function makeLibrary() {
 }
 
 makeLibrary();
-const hub = await createHub({ dataDir, port, token: process.env.MULTIROOM_TOKEN ?? '', quiet: true });
+const hub = await createHub({ dataDir, port, token: process.env.MULTIROOM_TOKEN ?? '', quiet: true, demo: true });
 const hubUrl = `http://127.0.0.1:${hub.port}`;
 
 const agents = [];
