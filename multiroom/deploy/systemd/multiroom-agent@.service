@@ -1,0 +1,14 @@
+# User service: runs inside the same login session as PipeWire, one instance per speaker.
+#   systemctl --user enable --now multiroom-agent@kitchen
+[Unit]
+Description=Multiroom speaker bridge (%i)
+Wants=pipewire.service wireplumber.service pipewire-pulse.service
+After=pipewire.service wireplumber.service pipewire-pulse.service
+
+[Service]
+ExecStart=@NODE@ @DIR@/agent/src/index.js --config %h/.config/multiroom/agents/%i.json
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

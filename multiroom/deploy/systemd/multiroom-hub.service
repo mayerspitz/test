@@ -1,0 +1,16 @@
+[Unit]
+Description=Multiroom audio hub (library, YouTube Music, phone web app)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=@USER@
+WorkingDirectory=@DIR@/hub
+EnvironmentFile=-/etc/multiroom/hub.env
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=@NODE@ src/server.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -163,10 +163,14 @@ export class BluetoothLink extends EventEmitter {
   }
 }
 
+// True when our WirePlumber drop-in (0.5 .conf or 0.4 .lua) is installed for this user or system-wide.
 export function hardwareVolumeDisabled(home = os.homedir()) {
+  const lua = WIREPLUMBER_DROPIN.replace(/\.conf$/, '.lua');
   return [
     path.join(home, '.config/wireplumber/wireplumber.conf.d', WIREPLUMBER_DROPIN),
     path.join('/etc/wireplumber/wireplumber.conf.d', WIREPLUMBER_DROPIN),
+    path.join(home, '.config/wireplumber/bluetooth.lua.d', lua),
+    path.join('/etc/wireplumber/bluetooth.lua.d', lua),
   ].some((f) => fs.existsSync(f));
 }
 
