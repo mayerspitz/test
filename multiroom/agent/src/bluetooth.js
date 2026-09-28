@@ -11,18 +11,21 @@ import path from 'node:path';
 // drop-in installed by deploy/install-agent.sh disables Bluetooth "absolute
 // volume", and only then do we pin the PipeWire sink at 100 % so mpv's software
 // volume is the one and only volume control.
+const MAC_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i;
 export const WIREPLUMBER_DROPIN = '51-multiroom-bluetooth.conf';
 
 export class BluetoothLink extends EventEmitter {
   constructor({ speaker, adapter = 'hci0', autoReconnect = true, pollSeconds = 5, lockSinkVolume = true }, log) {
     super();
     this.address = speaker.toUpperCase();
-    this.adapter = adapter;
+    // `adapter` may be a name (hci0) or the adapter's own Bluetooth address. The address is
+    // better with several identical USB adapters: hciN numbers can change between boots.
+    this.adapterSpec = adapter;
+    this.adapter = MAC_RE.test(adapter) ? null : adapter;
     this.autoReconnect = autoReconnect;
     this.pollMs = pollSeconds * 1000;
     this.lockSinkVolume = lockSinkVolume;
     this.log = log;
-    this.devPath = `/org/bluez/${adapter}/dev_${this.address.replace(/:/g, '_')}`;
     this.connected = false;
     this.paired = true;
     this.name = null;
@@ -42,7 +45,7 @@ export class BluetoothLink extends EventEmitter {
     return {
       configured: true,
       address: this.address,
-      adapter: this.adapter,
+      adapter: this.adapter ?? this.adapterSpec,
       paired: this.paired,
       connected: this.connected,
       name: this.name,
@@ -52,10 +55,40 @@ export class BluetoothLink extends EventEmitter {
     };
   }
 
-  start() {
-    busctl(['set-property', 'org.bluez', `/org/bluez/${this.adapter}`, 'org.bluez.Adapter1', 'Powered', 'b', 'true']).catch((e) =>
+  get devPath() {
+    return `/org/bluez/${this.adapter}/dev_${this.address.replace(/:/g, '_')}`;
+  }
+
+  // Finds which hciN currently has the configured adapter address.
+  async #resolveAdapter() {
+    if (!MAC_RE.test(this.adapterSpec)) return this.adapter;
+    const want = this.adapterSpec.toUpperCase();
+    if (this.adapter) {
+      const addr = await busctl(['get-property', 'org.bluez', `/org/bluez/${this.adapter}`, 'org.bluez.Adapter1', 'Address']).then(parseBusctlValue).catch(() => null);
+      if (addr?.toUpperCase() === want) return this.adapter;
+    }
+    this.adapter = null;
+    const tree = await busctl(['--list', 'tree', 'org.bluez']).catch(() => '');
+    for (const name of tree.split('\n').map((l) => /^\/org\/bluez\/(hci\d+)$/.exec(l.trim())?.[1]).filter(Boolean)) {
+      const addr = await busctl(['get-property', 'org.bluez', `/org/bluez/${name}`, 'org.bluez.Adapter1', 'Address']).then(parseBusctlValue).catch(() => null);
+      if (addr?.toUpperCase() === want) {
+        this.adapter = name;
+        this.log.info(`Bluetooth adapter ${want} is ${name}`);
+        await this.#powerOn();
+        break;
+      }
+    }
+    return this.adapter;
+  }
+
+  #powerOn() {
+    return busctl(['set-property', 'org.bluez', `/org/bluez/${this.adapter}`, 'org.bluez.Adapter1', 'Powered', 'b', 'true']).catch((e) =>
       this.log.warn(`Could not power on ${this.adapter}: ${e.message}`),
     );
+  }
+
+  start() {
+    if (this.adapter) this.#powerOn();
     this.#poll();
     this.timer = setInterval(() => this.#poll(), this.pollMs);
   }
@@ -67,6 +100,7 @@ export class BluetoothLink extends EventEmitter {
   async reconnectNow() {
     this.nextAttempt = 0;
     this.backoff = 5000;
+    await this.inflight; // let a poll that is already running finish, then poll fresh
     await this.#poll();
   }
 
@@ -74,11 +108,22 @@ export class BluetoothLink extends EventEmitter {
     return parseBusctlValue(await busctl(['get-property', 'org.bluez', this.devPath, iface, prop]));
   }
 
-  async #poll() {
-    if (this.polling) return;
+  #poll() {
+    if (!this.inflight) this.inflight = this.#pollOnce().finally(() => (this.inflight = null));
+    return this.inflight;
+  }
+
+  async #pollOnce() {
     this.polling = true;
     const before = JSON.stringify(this.status());
     try {
+      if (!(await this.#resolveAdapter())) {
+        this.connected = false;
+        this.sink = null;
+        this.message = `Bluetooth adapter ${this.adapterSpec} not found — is it plugged in?`;
+        if (JSON.stringify(this.status()) !== before) this.emit('change');
+        return;
+      }
       let connected = false;
       try {
         connected = (await this.#getProp('org.bluez.Device1', 'Connected')) === true;

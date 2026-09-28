@@ -48,6 +48,9 @@ const save = () => fs.writeFileSync(p.join(dir, 'state.json'), JSON.stringify(st
 ${body}`;
     fs.writeFileSync(path.join(dir, 'busctl'), js(`
 if (args.includes('set-property')) process.exit(0);
+const adapters = st.adapters || { hci0: '00:1A:7D:DA:71:01' };
+if (args.includes('tree')) { console.log('/org/bluez'); for (const n of Object.keys(adapters)) console.log('/org/bluez/' + n); process.exit(0); }
+if (args.includes('org.bluez.Adapter1')) { const n = args.find((a) => a.startsWith('/org/bluez/')).split('/')[3]; if (!adapters[n]) process.exit(1); console.log('s "' + adapters[n] + '"'); process.exit(0); }
 if (!st.paired) { process.stderr.write('Failed to get property: Unknown object'); process.exit(1); }
 if (args.includes('Connect')) {
   if (st.connectFails > 0) { st.connectFails--; save(); process.stderr.write('Call failed: Host is down'); process.exit(1); }
@@ -110,6 +113,25 @@ if (args[0] === 'list') { if (st.connected) console.log('57\\tbluez_output.AA_BB
     assert.equal(s.sink, 'bluez_output.AA_BB_CC_DD_EE_FF.1');
     assert.ok(calls().some((c) => c === 'pactl set-sink-volume bluez_output.AA_BB_CC_DD_EE_FF.1 100%'));
     assert.ok(calls().some((c) => c.includes('/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF org.bluez.Device1 Connect')));
+  });
+
+  test('finds the adapter by its address even when hciN numbering changes', async () => {
+    state({ paired: true, connected: true, adapters: { hci0: '11:11:11:11:11:11', hci1: '22:22:22:22:22:22' } });
+    const bt = new BluetoothLink({ speaker: MAC, adapter: '22:22:22:22:22:22', pollSeconds: 60 }, quiet);
+    bt.start();
+    await until(() => bt.connected);
+    assert.equal(bt.adapter, 'hci1');
+    // after a reboot the same adapter comes up as hci0
+    state({ paired: true, connected: true, adapters: { hci0: '22:22:22:22:22:22', hci1: '11:11:11:11:11:11' } });
+    await bt.reconnectNow();
+    assert.equal(bt.adapter, 'hci0');
+    // unplugged
+    state({ paired: true, connected: true, adapters: { hci0: '11:11:11:11:11:11' } });
+    await bt.reconnectNow();
+    bt.stop();
+    assert.equal(bt.connected, false);
+    assert.match(bt.status().message, /not found/);
+    assert.ok(calls().some((c) => c.includes('/org/bluez/hci1/dev_AA_BB_CC_DD_EE_FF org.bluez.Device1 Connected')));
   });
 
   test('never touches the sink volume if the WirePlumber drop-in is missing', async () => {

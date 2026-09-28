@@ -8,6 +8,8 @@ A web app on your phone decides **what plays on which Bluetooth speaker**. Up to
 - **YouTube Music:** search, or paste any song, album or playlist link.
 - **Any stream URL:** internet radio, or media from your own custom app.
 - **Status per speaker:** see which bridges and speakers are online, with speaker battery level where the speaker reports it.
+- **Preview on your phone:** 🎧 plays a song on the phone only, before you send it to a speaker. On a speaker card, 🎧 listens along to that speaker.
+- **Live demo:** https://home-audio-demo.onrender.com
 - **Stream-only volume per speaker.** The speaker's own volume is **never** changed by the system.
 
 <p align="center">
@@ -57,6 +59,7 @@ Open the printed address on your phone (same Wi-Fi) or at `http://localhost:8080
 | [docs/SETUP.md](docs/SETUP.md) | Step-by-step install: hub, music import, pairing, bridges, phone, remote access, YouTube Music |
 | [docs/VERIFY_EXISTING_SYSTEM.md](docs/VERIFY_EXISTING_SYSTEM.md) | Check whether your current whole-home system can really play a different song per room, and why upstairs might differ |
 | [docs/API.md](docs/API.md) | REST + WebSocket reference for building your own mobile or web app |
+| [docs/PLAN_DISCUSSION.md](docs/PLAN_DISCUSSION.md) | **Hardware/setup options under discussion** (central box vs bridges, 6 vs 10 speakers, demo/production hosting) |
 | [docs/OPEN_ITEMS.md](docs/OPEN_ITEMS.md) | Open questions, pending hardware tests, and the feature backlog |
 
 ## Project layout
@@ -72,7 +75,7 @@ multiroom/
 
 ## Tests
 
-`npm test` runs 41 tests across the three packages.
+`npm test` runs 42 tests across the three packages.
 
 - **Hub**
   - queue logic, library indexing and uploads (including path-traversal attempts), HTTP Range streaming and auth

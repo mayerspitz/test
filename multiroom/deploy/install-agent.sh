@@ -2,7 +2,7 @@
 # Installs a SPEAKER BRIDGE: mpv + PipeWire + Bluetooth, and the multiroom agent for one speaker.
 # Run on the small computer next to the speaker (or on the hub, once per USB Bluetooth adapter):
 #   ./deploy/install-agent.sh --hub http://192.168.1.10:8080 --token SECRET \
-#       --zone kitchen --name "Kitchen" --speaker AA:BB:CC:DD:EE:FF [--adapter hci0]
+#       --zone kitchen --name "Kitchen" --speaker AA:BB:CC:DD:EE:FF [--adapter hci0 | --adapter 00:1A:7D:DA:71:01]
 # Pair the speaker first (or after) with: ./deploy/pair-speaker.sh pair AA:BB:CC:DD:EE:FF hci0
 source "$(dirname "$0")/lib.sh"
 
@@ -88,7 +88,14 @@ cat <<DONE
     Status:  the speaker appears in the app within a few seconds.
 DONE
 if [ -n "$SPEAKER" ]; then
-  if busctl --system get-property org.bluez "/org/bluez/$ADAPTER/dev_${SPEAKER//:/_}" org.bluez.Device1 Paired 2>/dev/null | grep -q true; then
+  AD_NAME="$ADAPTER"
+  if [[ "$ADAPTER" == *:* ]]; then
+    for dev in /sys/class/bluetooth/hci*; do
+      n="$(basename "$dev")"; [[ "$n" == *:* ]] && continue
+      busctl --system get-property org.bluez "/org/bluez/$n" org.bluez.Adapter1 Address 2>/dev/null | grep -qi "$ADAPTER" && AD_NAME="$n"
+    done
+  fi
+  if busctl --system get-property org.bluez "/org/bluez/$AD_NAME/dev_${SPEAKER//:/_}" org.bluez.Device1 Paired 2>/dev/null | grep -q true; then
     echo "    Speaker $SPEAKER is paired with $ADAPTER."
   else
     echo "    Speaker $SPEAKER is NOT paired yet. Put it in pairing mode, then run:"

@@ -3,6 +3,10 @@
 What's still open for the Home Audio project, and whose turn it is. This is updated as we go.
 _Last updated: 2026-09-28_
 
+> **Hardware and setup are being finalized in [PLAN_DISCUSSION.md](PLAN_DISCUSSION.md).** It compares the earlier agent's handoff (10 speakers, one central Pi with 10 USB Bluetooth adapters, 500 GB SSD) with this build, and lists questions Q-A to Q-I. Nothing from the handoff counts as decided until you confirm it there.
+
+**Demo:** https://home-audio-demo.onrender.com (Render free plan; the first visit after it has been idle takes about a minute)
+
 ## Decisions made
 
 | Decision | Notes |
@@ -11,6 +15,14 @@ _Last updated: 2026-09-28_
 | Architecture: one hub + one small bridge per Bluetooth speaker | Up to 6+ independent streams; volume on the stream only, never on the speaker |
 | Control is **web-based** for now (phone browser / home-screen app) | You use Android, but the app doesn't depend on the phone platform. No native app for now |
 | Public demo on Render | Simulated speakers; for trying the app, not for real use |
+| Preview a song on your phone (🎧) before sending it to a speaker | Built |
+
+## Done since the last update
+
+- 🎧 **Preview on this phone:** every song in the picker and the library can be heard on the phone only, before it goes to a speaker
+- 🎧 on a speaker card: listen along to what that speaker is playing
+- Storage (music size, disk free) in Settings
+- Bluetooth adapters can be named by their own address, so 10 identical USB adapters can't get mixed up after a reboot
 
 ## Questions for you
 
@@ -24,6 +36,8 @@ _Last updated: 2026-09-28_
 | Q6 | Hub: reuse a computer/NAS you already own, or buy a Raspberry Pi 5? | Cost ($130 difference) | ⏳ waiting for you |
 | Q7 | YouTube Music via yt-dlp: are you comfortable with it (unofficial, may conflict with YouTube's terms)? Signed out (no per-account stream limit) or with your account? | Premium allows 1 stream per account, which conflicts when several rooms play YouTube | ⏳ waiting for you |
 | Q8 | Control from outside the house: OK to use Tailscale (free, no port forwarding)? | Remote access design | ⏳ waiting for you |
+| Q10 | **Demo + production on one Render app** (`demo.<name>` / `app.<name>`): which domain? Is production a hub at home reached through a tunnel (recommended), or a hub in the cloud? See [PLAN_DISCUSSION.md §4](PLAN_DISCUSSION.md#4-demo-and-production-on-one-render-app) | Changes the architecture and the monthly cost | ⏳ waiting for you |
+| Q11 | **6 or 10 speakers; one central box, bridges, or a hybrid?** Needs a speaker map: rooms, floors, distances. See [PLAN_DISCUSSION.md](PLAN_DISCUSSION.md) | Main hardware decision | ⏳ waiting for you |
 | Q9 | Features you'd like next, if any (see the backlog below) | Scope of the next round | ⏳ waiting for you |
 
 ## To do: needs real hardware (first pilot: 1 hub + 1 bridge + 1 speaker)

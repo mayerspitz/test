@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises';
 import express from 'express';
 import { badRequest } from './errors.js';
 import { makeItem, shuffled } from './queue.js';
@@ -77,6 +78,16 @@ export function createApi({ zones, library, youtube }) {
   api.post('/library/upload', wrap((req) => library.handleUpload(req, req.query.collection)));
   api.post('/library/rescan', wrap(() => library.rescan()));
   api.delete('/library/collections/:name', wrap(async (req) => (await library.removeCollection(req.params.name), ok)));
+
+  // ---- system: storage for the library disk ----
+  api.get('/system', wrap(async () => {
+    const st = await fs.statfs(library.dir);
+    const tracks = Object.values(library.tracks);
+    return {
+      library: { tracks: tracks.length, bytes: tracks.reduce((n, t) => n + (t.size ?? 0), 0), collections: library.collections().length },
+      disk: { total: st.blocks * st.bsize, free: st.bavail * st.bsize },
+    };
+  }));
 
   // ---- YouTube Music ----
   api.get('/youtube/status', wrap(() => youtube.status()));

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Pair a Bluetooth speaker with a specific adapter of this bridge.
-#   ./deploy/pair-speaker.sh adapters                     list Bluetooth adapters (hci0, hci1, …)
+#   ./deploy/pair-speaker.sh adapters                     list Bluetooth adapters (hci0, hci1, … and their addresses)
+#   (wherever [hci0] appears you can also give the adapter's address — best with many identical USB adapters)
 #   ./deploy/pair-speaker.sh scan [hci0]                  find nearby devices (speaker in pairing mode)
 #   ./deploy/pair-speaker.sh pair AA:BB:CC:DD:EE:FF [hci0]  pair + trust + connect
 #   ./deploy/pair-speaker.sh remove AA:BB:CC:DD:EE:FF [hci0]
@@ -9,9 +10,20 @@
 set -euo pipefail
 
 cmd="${1:-}"
+# Adapters can be named hciN or by their own address (stable across reboots).
 adapter_addr() {
+  if [[ "$1" =~ ^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$ ]]; then echo "$1" | tr 'a-f' 'A-F'; return; fi
   busctl --system get-property org.bluez "/org/bluez/$1" org.bluez.Adapter1 Address 2>/dev/null | sed -E 's/^s "(.*)"$/\1/' ||
     { echo "Adapter $1 not found. Run: $0 adapters" >&2; exit 1; }
+}
+adapter_name() {
+  if [[ ! "$1" =~ : ]]; then echo "$1"; return; fi
+  local want; want="$(adapter_addr "$1")"
+  for dev in /sys/class/bluetooth/hci*; do
+    local n; n="$(basename "$dev")"; [[ "$n" == *:* ]] && continue
+    [ "$(adapter_addr "$n")" = "$want" ] && { echo "$n"; return; }
+  done
+  echo "Adapter $1 not found. Run: $0 adapters" >&2; exit 1
 }
 # Feed commands to bluetoothctl; "sleep:N" pauses N seconds between commands.
 btctl() {
@@ -35,7 +47,7 @@ case "$cmd" in
     ;;
   pair)
     MAC="$(echo "${2:?MAC address required}" | tr 'a-f' 'A-F')"
-    AD="${3:-hci0}"
+    AD="$(adapter_name "${3:-hci0}")"
     A="$(adapter_addr "$AD")"
     echo "Pairing $MAC with $AD ($A). The speaker must be in pairing mode…"
     btctl "select $A" "power on" "agent NoInputNoOutput" "default-agent" "scan on" sleep:10 \

@@ -195,9 +195,69 @@ function toggleMonitor(id) {
   if (state.tab === 'speakers') renderSpeakers();
 }
 
+// ---- Preview: hear a song on this phone before sending it to a speaker ----------
+const previewAudio = new Audio();
+let previewKey = null;
+const previewButtons = new Set();
+
+function previewBtn(item) {
+  const key = `${item.kind}:${item.ref}`;
+  const btn = iconBtn('headphones', `Preview "${item.title}" on this phone`, stop(() => togglePreview(item)));
+  btn.dataset.previewKey = key;
+  btn.classList.toggle('on', previewKey === key);
+  previewButtons.add(btn);
+  return btn;
+}
+
+function togglePreview(item) {
+  const key = `${item.kind}:${item.ref}`;
+  if (previewKey === key) return stopPreview();
+  previewKey = key;
+  monitorAudio.pause(); // one thing at a time on the phone
+  previewAudio.src = mediaUrlOf(item);
+  previewAudio.volume = 1;
+  previewAudio.play().catch((err) => toast(`Can't preview: ${err.message}`, true));
+  showPreviewBar(item.title);
+  refreshPreviewButtons();
+}
+
+function stopPreview() {
+  previewKey = null;
+  previewAudio.pause();
+  previewAudio.removeAttribute('src');
+  previewAudio.load();
+  $('#preview-bar')?.remove();
+  refreshPreviewButtons();
+  syncMonitor();
+}
+
+function refreshPreviewButtons() {
+  for (const b of previewButtons) {
+    if (!b.isConnected) previewButtons.delete(b);
+    else b.classList.toggle('on', b.dataset.previewKey === previewKey);
+  }
+}
+
+function showPreviewBar(title) {
+  $('#preview-bar')?.remove();
+  const time = h('span', { class: 'muted' }, '0:00');
+  const bar = h('div', { id: 'preview-bar', role: 'status' },
+    icon('headphones'),
+    h('div', { class: 'meta' }, h('div', { class: 't', dir: 'auto' }, title), h('div', { class: 'a' }, 'Preview on this phone only · ', time)),
+    iconBtn('x', 'Stop preview', stopPreview),
+  );
+  document.body.append(bar);
+  previewAudio.ontimeupdate = () => (time.textContent = fmtTime(previewAudio.currentTime));
+}
+previewAudio.addEventListener('ended', stopPreview);
+previewAudio.addEventListener('error', () => {
+  if (previewKey) toast('This song could not be previewed', true);
+  stopPreview();
+});
+
 function syncMonitor() {
   const z = state.monitor && state.zones.get(state.monitor);
-  if (!z) return;
+  if (!z || previewKey) return;
   const cur = z.current;
   monitorAudio.volume = Math.pow(z.volume / 100, 3); // same cubic curve as the bridges (mpv)
   if (!cur || z.state === 'stopped') {
@@ -669,7 +729,7 @@ async function libraryPane(pane, zoneId, sheet) {
         subtitle: t.artist,
         duration: t.duration,
         onclick: () => playItems(zoneId, collection, { startIndex: i }),
-        actions: [iconBtn('plus', 'Add to queue', stop(() => playItems(zoneId, [{ kind: 'track', id: t.id }], { mode: 'append' })))],
+        actions: [previewBtn({ kind: 'track', ref: t.id, title: t.title }), iconBtn('plus', 'Add to queue', stop(() => playItems(zoneId, [{ kind: 'track', id: t.id }], { mode: 'append' })))],
       })),
     );
   }
@@ -686,7 +746,7 @@ async function libraryPane(pane, zoneId, sheet) {
         subtitle: [t.artist, t.collection].filter(Boolean).join(' · '),
         duration: t.duration,
         onclick: () => playItems(zoneId, [{ kind: 'track', id: t.id }], { mode: 'now' }),
-        actions: [iconBtn('plus', 'Add to queue', stop(() => playItems(zoneId, [{ kind: 'track', id: t.id }], { mode: 'append' })))],
+        actions: [previewBtn({ kind: 'track', ref: t.id, title: t.title }), iconBtn('plus', 'Add to queue', stop(() => playItems(zoneId, [{ kind: 'track', id: t.id }], { mode: 'append' })))],
       })),
       ...(total > items.length ? [h('p', { class: 'hint' }, `Showing ${items.length} of ${total} — refine your search.`)] : []),
     );
@@ -736,6 +796,7 @@ async function youtubePane(pane, zoneId) {
         duration: it.duration,
         onclick: () => playItems(zoneId, [toItem(it)], { mode: 'now' }),
         actions: [
+          previewBtn({ kind: 'youtube', ref: it.id, title: it.title }),
           iconBtn('play-next', 'Play next', stop(() => playItems(zoneId, [toItem(it)], { mode: 'next' }))),
           iconBtn('plus', 'Add to queue', stop(() => playItems(zoneId, [toItem(it)], { mode: 'append' }))),
         ],
@@ -1034,7 +1095,7 @@ async function renderCollection(col) {
       subtitle: [t.artist, t.album].filter(Boolean).join(' · '),
       duration: t.duration,
       onclick: () => playOn(collection, { startIndex: i }),
-      actions: [iconBtn('trash', 'Delete song', stop(async () => {
+      actions: [previewBtn({ kind: 'track', ref: t.id, title: t.title }), iconBtn('trash', 'Delete song', stop(async () => {
         if (!confirm(`Delete "${t.title}" from the hub?`)) return;
         try {
           await api(`/library/tracks/${t.id}`, { method: 'DELETE' });
@@ -1145,8 +1206,12 @@ async function renderSettings() {
   );
   const zones = [...state.zones.values()];
   if (!state.youtube) state.youtube = await api('/youtube/status').catch(() => ({ available: false }));
+  const sys = await api('/system').catch(() => null);
+  const gb = (n) => `${(n / 1e9).toFixed(n < 1e10 ? 1 : 0)} GB`;
   const rows = [
     ['Hub version', state.hubVersion ?? '–'],
+    ['Music library', sys ? `${plural(sys.library.tracks, 'song')} · ${gb(sys.library.bytes)}` : '–'],
+    ['Storage free', sys ? `${gb(sys.disk.free)} of ${gb(sys.disk.total)}` : '–'],
     ['Speakers online', `${zones.filter((z) => z.online).length} of ${zones.length}`],
     ['Now playing', `${zones.filter((z) => z.state === 'playing').length}`],
     ['YouTube Music', state.youtube.available ? `yt-dlp ${state.youtube.version}` : 'Not installed on the hub'],
