@@ -1,7 +1,7 @@
 # Open items
 
 What's still open for the Home Audio project, and whose turn it is. This is updated as we go.
-_Last updated: 2026-09-28 (round 3)_
+_Last updated: 2026-09-29_
 
 > **Hardware and setup are being finalized in [PLAN_DISCUSSION.md](PLAN_DISCUSSION.md).** It compares the earlier agent's handoff (10 speakers, one central Pi with 10 USB Bluetooth adapters, 500 GB SSD) with this build, and lists questions Q-A to Q-I. Nothing from the handoff counts as decided until you confirm it there.
 
@@ -29,7 +29,16 @@ _Last updated: 2026-09-28 (round 3)_
 | Any Bluetooth speaker ("universal") | Only standard Bluetooth audio (A2DP); no brand-specific features |
 | YouTube Music fetched by the Pi (home internet), and a 3-adapter pilot first | Accepted as proposed |
 
+| **Mixed playlists** (library + YouTube + links); YouTube Music playlist links play now or join the queue (2026-09-29) | Built |
+| Old demo address forwards to the new app's /demo/ | No dashboard step needed |
+| Parts to order | [SHOPPING_LIST.md](SHOPPING_LIST.md). Proposed: **Pi 5 4 GB** instead of Pi 4 (≈ $10 more, separate USB controllers); please confirm |
+
 ## Done since the last update
+
+- **Playlists tab:** build playlists mixing library songs, YouTube Music songs and links; reorder, rename, preview, play or shuffle on any speaker
+- Anywhere in the picker: ⋯ → Play next / Add to playlist; the queue has **Save as playlist**
+- **YouTube Music playlist links:** Play all / Shuffle / Add all to queue / Save as playlist
+- The demo has a clearly labelled pretend YouTube catalog and a ready-made mixed playlist, so all of this can be tried there
 
 - **Cloud mode:** the cloud app handles control, and the home Pi handles the music, speakers and YouTube, over an outgoing connection
   - The Pi backs up speakers and queues and restores them after a free-plan restart (tested: the song keeps playing)
@@ -57,7 +66,7 @@ _Last updated: 2026-09-28 (round 3)_
 | Q11 | 6 or 10 speakers; central box or bridges | Main hardware decision | ✅ answered: one central Pi, capacity for 10 |
 | R1–R8 | Round-2 questions | | ✅ answered (round 3), except the speaker models, which come later |
 | R9 | Your current speakers (models, how many), whenever convenient | Pilot planning; the design already works with any speaker | ⏳ later |
-| R10 | Before ordering: approve the final parts list (Pi 4 4 GB, 500 GB SSD, multi-TT powered hub, UB500 ×3 for the pilot, cables) | I'll shortlist exact models and prices next | ⏳ next step |
+| R10 | Approve the parts list in [SHOPPING_LIST.md](SHOPPING_LIST.md). Pi 5 or Pi 4? | Ready to order the pilot | ⏳ waiting for you |
 | Q9 | Features you'd like next, if any (see the backlog below) | Scope of the next round | ⏳ waiting for you |
 
 ## To do: needs real hardware (first pilot: 1 hub + 1 bridge + 1 speaker)

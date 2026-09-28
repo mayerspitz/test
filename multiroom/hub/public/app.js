@@ -50,6 +50,11 @@ const ICONS = {
   speaker: ['', '<rect x="6" y="3" width="12" height="18" rx="2.5"/><circle cx="12" cy="14" r="3.2"/><circle cx="12" cy="7.2" r="1.1"/>'],
   radio: ['', '<circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4"/><path d="M7.8 16.2a6 6 0 0 1 0-8.4"/><path d="M19.1 4.9a10 10 0 0 1 0 14.2"/><path d="M4.9 19.1a10 10 0 0 1 0-14.2"/>'],
   headphones: ['', '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3z"/><path d="M3 19a2 2 0 0 0 2 2h1v-6H3z"/>'],
+  list: ['', '<path d="M3 6h11"/><path d="M3 12h11"/><path d="M3 18h7"/><path d="M17 18V7l4-1"/><circle cx="15" cy="18" r="2"/>'],
+  'list-plus': ['', '<path d="M3 6h12"/><path d="M3 12h12"/><path d="M3 18h7"/><path d="M18 14v8"/><path d="M14 18h8"/>'],
+  up: ['', '<path d="m6 15 6-6 6 6"/>'],
+  down: ['', '<path d="m6 9 6 6 6-6"/>'],
+  edit: ['', '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'],
   'play-next': ['', '<path d="M3 6h12"/><path d="M3 12h8"/><path d="M3 18h8"/><path d="M15 12h6"/><path d="m18 9 3 3-3 3"/>'],
 };
 
@@ -138,6 +143,7 @@ const state = {
 };
 const zoneListeners = new Set();
 const libraryListeners = new Set();
+const playlistListeners = new Set();
 
 // -------------------------------------------------------------------- API --
 async function api(path, { method = 'GET', body } = {}) {
@@ -333,6 +339,8 @@ function connectWs() {
     } else if (m.type === 'zone-removed') {
       state.zones.delete(m.id);
       render();
+    } else if (m.type === 'playlists') {
+      for (const fn of playlistListeners) fn(m.id);
     } else if (m.type === 'library') {
       state.collections = null;
       for (const fn of libraryListeners) fn();
@@ -360,7 +368,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ------------------------------------------------------------ navigation --
-const TITLES = { speakers: 'Speakers', library: 'Library', settings: 'Settings' };
+const TITLES = { speakers: 'Speakers', library: 'Library', playlists: 'Playlists', settings: 'Settings' };
 
 for (const btn of document.querySelectorAll('.tabbar button')) {
   btn.addEventListener('click', () => {
@@ -378,6 +386,7 @@ function render() {
   cards.clear();
   if (state.tab === 'speakers') renderSpeakers();
   else if (state.tab === 'library') renderLibrary();
+  else if (state.tab === 'playlists') renderPlaylists();
   else renderSettings();
 }
 
@@ -674,30 +683,116 @@ function stop(fn) {
 }
 
 // -------------------------------------------------------- music picker --
+// The picker sends what you choose to a "target": a speaker (play / queue) or a
+// playlist you're building. Playlists mix library songs, YouTube songs and links.
+function zoneTarget(zoneId) {
+  const name = state.zones.get(zoneId)?.name ?? zoneId;
+  return {
+    forZone: true,
+    title: `Play on ${name}`,
+    go: (items, opts) => playItems(zoneId, items, opts),
+    add: (items) => playItems(zoneId, items, { mode: 'append' }),
+    next: (items) => playItems(zoneId, items, { mode: 'next' }),
+  };
+}
+
+function playlistTarget(pl, onChange) {
+  const add = (items) => addToPlaylist(pl, items, onChange);
+  return { forZone: false, title: `Add to “${pl.name}”`, go: add, add };
+}
+
+async function addToPlaylist(pl, items, onChange) {
+  try {
+    const r = await api(`/playlists/${pl.id}/items`, { method: 'POST', body: { items } });
+    toast(`Added to “${r.name}”`);
+    onChange?.(r);
+    return true;
+  } catch (err) {
+    toast(err.message, true);
+    return false;
+  }
+}
+
+// Row buttons: preview, add (to queue or playlist), and ⋯ (play next / add to playlist).
+function rowActions(target, spec, preview) {
+  const acts = [];
+  if (preview) acts.push(previewBtn(preview));
+  acts.push(iconBtn('plus', target.forZone ? 'Add to queue' : 'Add to playlist', stop(() => target.add([spec]))));
+  if (target.forZone) acts.push(iconBtn('more', 'More', stop(() => openItemMenu(target, [spec], preview?.title ?? 'Song'))));
+  return acts;
+}
+
+function openItemMenu(target, items, title) {
+  const s = openSheet({ title });
+  s.body.append(h('div', { class: 'pane' },
+    h('button', { class: 'btn', onclick: async () => (await target.next(items)) && s.close() }, icon('play-next'), 'Play next'),
+    h('button', { class: 'btn', onclick: () => (s.close(), addToPlaylistFlow(items)) }, icon('list-plus'), 'Add to playlist…'),
+  ));
+}
+
+// Pick an existing playlist, or create a new one, for `items`.
+async function addToPlaylistFlow(items, suggestedName = '') {
+  let lists;
+  try {
+    lists = await api('/playlists');
+  } catch (err) {
+    toast(err.message, true);
+    return;
+  }
+  const s = openSheet({ title: 'Add to playlist' });
+  const name = h('input', { class: 'field', placeholder: 'New playlist name', value: suggestedName, dir: 'auto' });
+  s.body.append(h('div', { class: 'pane' },
+    h('form', { class: 'split', onsubmit: async (e) => {
+      e.preventDefault();
+      try {
+        const pl = await api('/playlists', { method: 'POST', body: { name: name.value, items } });
+        toast(`Created “${pl.name}” with ${plural(pl.items.length, 'song')}`);
+        s.close();
+      } catch (err) {
+        toast(err.message, true);
+      }
+    } }, name, h('button', { class: 'btn primary', type: 'submit' }, icon('plus'), 'New playlist')),
+    h('div', { class: 'list' }, ...lists.map((pl) => itemRow({
+      art: pl.artwork,
+      fallback: 'list',
+      title: pl.name,
+      subtitle: plural(pl.count, 'song'),
+      onclick: async () => (await addToPlaylist(pl, items)) && s.close(),
+    }))),
+  ));
+}
+
 function openPicker(zoneId) {
-  const z = state.zones.get(zoneId);
-  const s = openSheet({ title: `Play on ${z?.name ?? zoneId}`, tall: true });
+  openPickerFor(zoneTarget(zoneId));
+}
+
+function openPickerFor(target) {
+  const s = openSheet({ title: target.title, tall: true });
   const tabs = [
     ['library', 'Library', 'music'],
     ['youtube', 'YouTube', 'youtube'],
+    ...(target.forZone ? [['playlists', 'Playlists', 'list']] : []),
     ['link', 'Link', 'link'],
   ];
   const seg = h('div', { class: 'segmented', role: 'tablist' });
   const pane = h('div', { class: 'pane' });
   const show = (tab) => {
+    if (!tabs.some(([k]) => k === tab)) tab = 'library';
     storage.set('multiroom.pickerTab', tab);
     for (const b of seg.children) b.classList.toggle('active', b.dataset.tab === tab);
     pane.replaceChildren();
-    if (tab === 'library') libraryPane(pane, zoneId, s);
-    else if (tab === 'youtube') youtubePane(pane, zoneId);
-    else linkPane(pane, zoneId, s);
+    if (tab === 'library') libraryPane(pane, target, s);
+    else if (tab === 'youtube') youtubePane(pane, target, s);
+    else if (tab === 'playlists') playlistsPane(pane, target, s);
+    else linkPane(pane, target, s);
   };
   for (const [key, label, ic] of tabs) seg.append(h('button', { 'data-tab': key, role: 'tab', onclick: () => show(key) }, icon(ic), label));
   s.body.append(seg, pane);
   show(storage.get('multiroom.pickerTab', 'library'));
 }
 
-async function libraryPane(pane, zoneId, sheet) {
+async function libraryPane(pane, target, sheet) {
+  const done = (ok) => ok && target.forZone && sheet.close();
   const results = h('div', { class: 'list' });
   let timer;
   const { input, wrap } = searchField('Search your music', () => {
@@ -720,17 +815,22 @@ async function libraryPane(pane, zoneId, sheet) {
       return;
     }
     results.replaceChildren(
-      ...cols.map((col) => itemRow({
-        art: col.cover ? `/api/library/tracks/${col.cover}/cover` : null,
-        fallback: 'folder',
-        title: col.name,
-        subtitle: `${plural(col.tracks, 'song')}${col.duration ? ` · ${fmtLong(col.duration)}` : ''}`,
-        onclick: () => showCollection(col),
-        actions: [
-          iconBtn('shuffle', `Shuffle ${col.name}`, stop(() => playItems(zoneId, [{ kind: 'collection', name: col.name }], { shuffle: true }).then((ok) => ok && sheet.close()))),
-          iconBtn('play', `Play ${col.name}`, stop(() => playItems(zoneId, [{ kind: 'collection', name: col.name }], { shuffle: false }).then((ok) => ok && sheet.close()))),
-        ],
-      })),
+      ...cols.map((col) => {
+        const spec = [{ kind: 'collection', name: col.name }];
+        return itemRow({
+          art: col.cover ? `/api/library/tracks/${col.cover}/cover` : null,
+          fallback: 'folder',
+          title: col.name,
+          subtitle: `${plural(col.tracks, 'song')}${col.duration ? ` · ${fmtLong(col.duration)}` : ''}`,
+          onclick: () => showCollection(col),
+          actions: target.forZone
+            ? [
+                iconBtn('shuffle', `Shuffle ${col.name}`, stop(() => target.go(spec, { shuffle: true }).then(done))),
+                iconBtn('play', `Play ${col.name}`, stop(() => target.go(spec, { shuffle: false }).then(done))),
+              ]
+            : [iconBtn('plus', `Add all of ${col.name}`, stop(() => target.add(spec)))],
+        });
+      }),
     );
   }
 
@@ -741,17 +841,21 @@ async function libraryPane(pane, zoneId, sheet) {
     results.replaceChildren(
       h('button', { class: 'back', onclick: showCollections }, icon('back'), 'Collections'),
       h('div', { class: 'toolbar' },
-        h('button', { class: 'btn small primary', onclick: () => playItems(zoneId, collection, { shuffle: false }).then((ok) => ok && sheet.close()) }, icon('play'), 'Play all'),
-        h('button', { class: 'btn small', onclick: () => playItems(zoneId, collection, { shuffle: true }).then((ok) => ok && sheet.close()) }, icon('shuffle'), 'Shuffle'),
-        h('button', { class: 'btn small', onclick: () => playItems(zoneId, collection, { mode: 'append' }) }, icon('plus'), 'Add all to queue'),
+        ...(target.forZone
+          ? [
+              h('button', { class: 'btn small primary', onclick: () => target.go(collection, { shuffle: false }).then(done) }, icon('play'), 'Play all'),
+              h('button', { class: 'btn small', onclick: () => target.go(collection, { shuffle: true }).then(done) }, icon('shuffle'), 'Shuffle'),
+              h('button', { class: 'btn small', onclick: () => target.add(collection) }, icon('plus'), 'Add all to queue'),
+            ]
+          : [h('button', { class: 'btn small primary', onclick: () => target.add(collection) }, icon('plus'), `Add all ${items.length}`)]),
       ),
       ...items.map((t, i) => itemRow({
         num: i + 1,
         title: t.title,
         subtitle: t.artist,
         duration: t.duration,
-        onclick: () => playItems(zoneId, collection, { startIndex: i }),
-        actions: [previewBtn({ kind: 'track', ref: t.id, title: t.title }), iconBtn('plus', 'Add to queue', stop(() => playItems(zoneId, [{ kind: 'track', id: t.id }], { mode: 'append' })))],
+        onclick: () => (target.forZone ? target.go(collection, { startIndex: i }) : target.add([{ kind: 'track', id: t.id }])),
+        actions: rowActions(target, { kind: 'track', id: t.id }, { kind: 'track', ref: t.id, title: t.title }),
       })),
     );
   }
@@ -767,8 +871,8 @@ async function libraryPane(pane, zoneId, sheet) {
         title: t.title,
         subtitle: [t.artist, t.collection].filter(Boolean).join(' · '),
         duration: t.duration,
-        onclick: () => playItems(zoneId, [{ kind: 'track', id: t.id }], { mode: 'now' }),
-        actions: [previewBtn({ kind: 'track', ref: t.id, title: t.title }), iconBtn('plus', 'Add to queue', stop(() => playItems(zoneId, [{ kind: 'track', id: t.id }], { mode: 'append' })))],
+        onclick: () => target.go([{ kind: 'track', id: t.id }], { mode: 'now' }),
+        actions: rowActions(target, { kind: 'track', id: t.id }, { kind: 'track', ref: t.id, title: t.title }),
       })),
       ...(total > items.length ? [h('p', { class: 'hint' }, `Showing ${items.length} of ${total} — refine your search.`)] : []),
     );
@@ -781,7 +885,7 @@ async function libraryPane(pane, zoneId, sheet) {
 
 const ytCache = { q: '', results: null, title: null };
 
-async function youtubePane(pane, zoneId) {
+async function youtubePane(pane, target) {
   const { input, wrap } = searchField('Search songs, or paste a YouTube Music link');
   input.value = ytCache.q;
   const results = h('div', { class: 'list' });
@@ -791,8 +895,10 @@ async function youtubePane(pane, zoneId) {
   if (!state.youtube) state.youtube = await api('/youtube/status').catch(() => ({ available: false }));
   if (!state.youtube.available) {
     results.replaceChildren(h('div', { class: 'card' },
-      h('strong', null, 'YouTube Music is not set up on the hub'),
-      h('p', { class: 'muted' }, 'Install yt-dlp on the hub computer (deploy/install-hub.sh does this) and restart the hub.'),
+      h('strong', null, 'YouTube Music is not available right now'),
+      h('p', { class: 'muted' }, state.demo
+        ? 'The demo has no YouTube. On your real system the home Pi fetches YouTube Music.'
+        : 'It needs yt-dlp on the computer that holds the music (the installers set it up), and that computer must be online.'),
     ));
     input.disabled = true;
     return;
@@ -800,14 +906,21 @@ async function youtubePane(pane, zoneId) {
 
   const toItem = (it) => ({ kind: 'youtube', id: it.id, title: it.title, artist: it.artist, duration: it.duration, artwork: it.artwork });
   const show = (items, playlistTitle) => {
+    const all = items.map(toItem);
     const head = playlistTitle && items.length > 1
       ? [h('div', { class: 'toolbar' },
-          h('button', { class: 'btn small primary', onclick: () => playItems(zoneId, items.map(toItem), { shuffle: false }) }, icon('play'), `Play all ${items.length}`),
-          h('button', { class: 'btn small', onclick: () => playItems(zoneId, items.map(toItem), { shuffle: true }) }, icon('shuffle'), 'Shuffle'),
-          h('button', { class: 'btn small', onclick: () => playItems(zoneId, items.map(toItem), { mode: 'append' }) }, icon('plus'), 'Add all'),
+          ...(target.forZone
+            ? [
+                h('button', { class: 'btn small primary', onclick: () => target.go(all, { shuffle: false }) }, icon('play'), `Play all ${items.length}`),
+                h('button', { class: 'btn small', onclick: () => target.go(all, { shuffle: true }) }, icon('shuffle'), 'Shuffle'),
+                h('button', { class: 'btn small', onclick: () => target.add(all) }, icon('plus'), 'Add all to queue'),
+                h('button', { class: 'btn small', onclick: () => addToPlaylistFlow(all, playlistTitle) }, icon('list-plus'), 'Save as playlist'),
+              ]
+            : [h('button', { class: 'btn small primary', onclick: () => target.add(all) }, icon('plus'), `Add all ${items.length}`)]),
         )]
       : [];
     results.replaceChildren(
+      ...(playlistTitle && items.length > 1 ? [h('p', { class: 'hint', dir: 'auto' }, `Playlist: ${playlistTitle}`)] : []),
       ...head,
       ...(items.length ? [] : [h('p', { class: 'hint' }, 'Nothing found.')]),
       ...items.map((it) => itemRow({
@@ -816,12 +929,8 @@ async function youtubePane(pane, zoneId) {
         title: it.title,
         subtitle: it.artist,
         duration: it.duration,
-        onclick: () => playItems(zoneId, [toItem(it)], { mode: 'now' }),
-        actions: [
-          previewBtn({ kind: 'youtube', ref: it.id, title: it.title }),
-          iconBtn('play-next', 'Play next', stop(() => playItems(zoneId, [toItem(it)], { mode: 'next' }))),
-          iconBtn('plus', 'Add to queue', stop(() => playItems(zoneId, [toItem(it)], { mode: 'append' }))),
-        ],
+        onclick: () => target.go([toItem(it)], { mode: 'now' }),
+        actions: rowActions(target, toItem(it), { kind: 'youtube', ref: it.id, title: it.title }),
       })),
     );
   };
@@ -842,36 +951,97 @@ async function youtubePane(pane, zoneId) {
   }
 
   if (ytCache.results) show(ytCache.results, ytCache.title);
-  else results.replaceChildren(h('p', { class: 'hint' }, 'Tip: in the YouTube Music app, Share → Copy link, then paste it here to play a song, album or playlist.'));
+  else results.replaceChildren(h('p', { class: 'hint' }, 'Tip: in the YouTube Music app, Share → Copy link, then paste it here to play a song, album or playlist — or add a whole playlist to the queue.'));
 }
 
-function linkPane(pane, zoneId, sheet) {
+async function playlistsPane(pane, target, sheet) {
+  const list = h('div', { class: 'list' }, spinner());
+  pane.append(list);
+  let lists;
+  try {
+    lists = await api('/playlists');
+  } catch (err) {
+    list.replaceChildren(h('p', { class: 'hint' }, err.message));
+    return;
+  }
+  const showAll = () => list.replaceChildren(
+    ...(lists.length ? [] : [h('p', { class: 'hint' }, 'No playlists yet. Build one in the Playlists tab, or use ⋯ → Add to playlist on any song.')]),
+    ...lists.map((pl) => {
+      const spec = [{ kind: 'playlist', id: pl.id }];
+      return itemRow({
+        art: pl.artwork,
+        fallback: 'list',
+        title: pl.name,
+        subtitle: `${plural(pl.count, 'song')}${pl.duration ? ` · ${fmtLong(pl.duration)}` : ''}`,
+        onclick: () => showOne(pl),
+        actions: [
+          iconBtn('shuffle', `Shuffle ${pl.name}`, stop(() => target.go(spec, { shuffle: true }).then((ok) => ok && sheet.close()))),
+          iconBtn('play', `Play ${pl.name}`, stop(() => target.go(spec, { shuffle: false }).then((ok) => ok && sheet.close()))),
+        ],
+      });
+    }),
+  );
+  async function showOne(summary) {
+    list.replaceChildren(spinner());
+    const pl = await api(`/playlists/${summary.id}`);
+    const spec = [{ kind: 'playlist', id: pl.id }];
+    list.replaceChildren(
+      h('button', { class: 'back', onclick: showAll }, icon('back'), 'Playlists'),
+      h('div', { class: 'toolbar' },
+        h('button', { class: 'btn small primary', onclick: () => target.go(spec, { shuffle: false }).then((ok) => ok && sheet.close()) }, icon('play'), 'Play all'),
+        h('button', { class: 'btn small', onclick: () => target.go(spec, { shuffle: true }).then((ok) => ok && sheet.close()) }, icon('shuffle'), 'Shuffle'),
+        h('button', { class: 'btn small', onclick: () => target.add(spec) }, icon('plus'), 'Add all to queue'),
+      ),
+      ...pl.items.map((it, i) => itemRow({
+        art: it.artwork,
+        fallback: it.kind === 'youtube' ? 'youtube' : it.kind === 'url' ? 'radio' : 'music',
+        title: it.title,
+        subtitle: [it.artist, KIND_LABEL[it.kind]].filter(Boolean).join(' · '),
+        duration: it.duration,
+        onclick: () => target.go(spec, { startIndex: i }),
+        actions: [previewBtn({ kind: it.kind, ref: it.ref, title: it.title })],
+      })),
+    );
+  }
+  showAll();
+}
+
+const KIND_LABEL = { track: 'Library', youtube: 'YouTube', url: 'Link' };
+
+function linkPane(pane, target, sheet) {
   const url = h('input', { class: 'field', type: 'url', placeholder: 'https://…', inputmode: 'url', autocomplete: 'off' });
   const title = h('input', { class: 'field', type: 'text', placeholder: 'Name (optional)' });
   const go = async (mode) => {
     const u = url.value.trim();
     if (!u) return;
+    let items;
     try {
       if (/(^|\.)youtube\.com|youtu\.be/i.test(new URL(u).hostname)) {
         const res = await api('/youtube/resolve', { method: 'POST', body: { url: u } });
-        const items = res.items.map((it) => ({ kind: 'youtube', ...it }));
-        if (await playItems(zoneId, items, { mode })) sheet.close();
-        return;
+        items = res.items.map((it) => ({ kind: 'youtube', id: it.id, title: it.title, artist: it.artist, duration: it.duration, artwork: it.artwork }));
+      } else {
+        items = [{ kind: 'url', url: u, title: title.value.trim() || undefined }];
       }
     } catch (err) {
       toast(err.message, true);
       return;
     }
-    if (await playItems(zoneId, [{ kind: 'url', url: u, title: title.value.trim() || undefined }], { mode })) sheet.close();
+    const ok = mode === 'append' ? await target.add(items) : await target.go(items, { mode });
+    if (ok && target.forZone) sheet.close();
+    if (ok && !target.forZone) url.value = title.value = '';
   };
   pane.append(
     h('label', { class: 'stack' }, 'Stream or file URL', url),
     h('label', { class: 'stack' }, 'Name', title),
     h('div', { class: 'toolbar' },
-      h('button', { class: 'btn primary', onclick: () => go('now') }, icon('play'), 'Play now'),
-      h('button', { class: 'btn', onclick: () => go('append') }, icon('plus'), 'Add to queue'),
+      ...(target.forZone
+        ? [
+            h('button', { class: 'btn primary', onclick: () => go('now') }, icon('play'), 'Play now'),
+            h('button', { class: 'btn', onclick: () => go('append') }, icon('plus'), 'Add to queue'),
+          ]
+        : [h('button', { class: 'btn primary', onclick: () => go('append') }, icon('plus'), 'Add to playlist')]),
     ),
-    h('p', { class: 'hint' }, 'Internet radio, an MP3 link, media served by your own app — or any YouTube / YouTube Music link.'),
+    h('p', { class: 'hint' }, 'Internet radio, an MP3 link, media served by your own app — or any YouTube / YouTube Music link (a playlist link adds every song).'),
   );
 }
 
@@ -881,6 +1051,16 @@ function openQueue(zoneId) {
   const s = openSheet({ title: `Queue · ${z?.name ?? zoneId}`, tall: true, onClose: () => zoneListeners.delete(onZone) });
   const list = h('div', { class: 'list' });
   const bar = h('div', { class: 'toolbar' },
+    h('button', { class: 'btn small', onclick: async () => {
+      const name = prompt('Name for the new playlist', `${z?.name ?? 'Queue'} mix`);
+      if (!name) return;
+      try {
+        const pl = await api(`/zones/${encodeURIComponent(zoneId)}/queue/save`, { method: 'POST', body: { name } });
+        toast(`Saved “${pl.name}” (${plural(pl.items.length, 'song')})`);
+      } catch (err) {
+        toast(err.message, true);
+      }
+    } }, icon('list-plus'), 'Save as playlist'),
     h('button', { class: 'btn small danger', onclick: async () => {
       if (!confirm('Clear the whole queue?')) return;
       await zoneCmd(zoneId, 'queue', undefined, 'DELETE');
@@ -1197,6 +1377,129 @@ function xhrUpload(files, collection, onProgress) {
     xhr.onerror = () => reject(new Error('Network error during upload'));
     xhr.send(fd);
   });
+}
+
+// -------------------------------------------------------------- playlists --
+// Build playlists that mix library songs, YouTube songs and links, then play them anywhere.
+async function renderPlaylists(openId = null) {
+  const view = $('#view');
+  playlistListeners.clear();
+  if (openId) return renderPlaylist(openId);
+  const name = h('input', { class: 'field', placeholder: 'New playlist name', dir: 'auto' });
+  const list = h('div', { class: 'list' }, spinner());
+  view.replaceChildren(
+    h('form', { class: 'card pane', onsubmit: async (e) => {
+      e.preventDefault();
+      try {
+        const pl = await api('/playlists', { method: 'POST', body: { name: name.value } });
+        renderPlaylist(pl.id);
+      } catch (err) {
+        toast(err.message, true);
+      }
+    } },
+      h('h2', { style: 'margin:0;font-size:17px' }, 'New playlist'),
+      h('p', { class: 'muted', style: 'margin:0' }, 'Mix songs from your library, YouTube Music and links in any order.'),
+      h('div', { class: 'split' }, name, h('button', { class: 'btn primary', type: 'submit' }, icon('plus'), 'Create')),
+    ),
+    h('div', { class: 'section-title' }, 'Your playlists'),
+    list,
+  );
+  const load = async () => {
+    let lists;
+    try {
+      lists = await api('/playlists');
+    } catch (err) {
+      list.replaceChildren(h('p', { class: 'hint' }, err.message));
+      return;
+    }
+    list.replaceChildren(
+      ...(lists.length ? [] : [h('p', { class: 'hint' }, 'No playlists yet.')]),
+      ...lists.map((pl) => itemRow({
+        art: pl.artwork,
+        fallback: 'list',
+        title: pl.name,
+        subtitle: `${plural(pl.count, 'song')}${pl.duration ? ` · ${fmtLong(pl.duration)}` : ''}${pl.kinds.length ? ` · ${pl.kinds.map((k) => KIND_LABEL[k]).join(' + ')}` : ''}`,
+        onclick: () => renderPlaylist(pl.id),
+        actions: [icon('chevron')],
+      })),
+    );
+  };
+  playlistListeners.add(load);
+  load();
+}
+
+async function renderPlaylist(id) {
+  const view = $('#view');
+  playlistListeners.clear();
+  let pl;
+  let editing = false;
+  const reload = async () => {
+    try {
+      pl = await api(`/playlists/${id}`);
+    } catch (err) {
+      view.replaceChildren(h('button', { class: 'back', onclick: () => renderPlaylists() }, icon('back'), 'Playlists'), h('p', { class: 'hint' }, err.message));
+      return;
+    }
+    draw();
+  };
+  const spec = () => [{ kind: 'playlist', id }];
+  const playOn = async (opts) => {
+    const zoneId = await chooseZone('Play on…');
+    if (zoneId) playItems(zoneId, spec(), opts);
+  };
+  const edit = async (fn) => {
+    try {
+      pl = await fn();
+      draw();
+    } catch (err) {
+      toast(err.message, true);
+    }
+  };
+  function draw() {
+    const n = pl.items.length;
+    view.replaceChildren(
+      h('button', { class: 'back', onclick: () => renderPlaylists() }, icon('back'), 'Playlists'),
+      h('h2', { dir: 'auto', style: 'margin:4px 0 2px' }, pl.name),
+      h('p', { class: 'muted', style: 'margin:0' }, `${plural(n, 'song')}${n ? ` · ${fmtLong(pl.items.reduce((t, i) => t + (i.duration ?? 0), 0))}` : ''}`),
+      h('div', { class: 'toolbar', style: 'margin-top:12px' },
+        h('button', { class: 'btn small primary', onclick: () => openPickerFor(playlistTarget(pl, (r) => ((pl = r), draw()))) }, icon('plus'), 'Add songs'),
+        n ? h('button', { class: 'btn small', onclick: () => playOn({ shuffle: false }) }, icon('play'), 'Play on…') : null,
+        n ? h('button', { class: 'btn small', onclick: () => playOn({ shuffle: true }) }, icon('shuffle'), 'Shuffle on…') : null,
+        h('button', { class: 'btn small', onclick: () => {
+          const name = prompt('Rename playlist', pl.name);
+          if (name) edit(() => api(`/playlists/${id}`, { method: 'PATCH', body: { name } }));
+        } }, icon('edit'), 'Rename'),
+        n ? h('button', { class: `btn small${editing ? ' primary' : ''}`, onclick: () => ((editing = !editing), draw()) }, icon('list'), editing ? 'Done' : 'Edit order') : null,
+        h('button', { class: 'btn small danger', onclick: async () => {
+          if (!confirm(`Delete the playlist “${pl.name}”? (The songs themselves stay.)`)) return;
+          try {
+            await api(`/playlists/${id}`, { method: 'DELETE' });
+            renderPlaylists();
+          } catch (err) {
+            toast(err.message, true);
+          }
+        } }, icon('trash'), 'Delete'),
+      ),
+      h('div', { class: 'list' },
+        ...(n ? [] : [h('p', { class: 'hint' }, 'Empty. Tap “Add songs” to pick from your library, YouTube Music or a link.')]),
+        ...pl.items.map((it, i) => itemRow({
+          num: i + 1,
+          title: it.title,
+          subtitle: [it.artist, KIND_LABEL[it.kind]].filter(Boolean).join(' · '),
+          duration: editing ? null : it.duration,
+          onclick: () => (editing ? null : playOn({ startIndex: i })),
+          actions: !editing ? [previewBtn({ kind: it.kind, ref: it.ref, title: it.title })] : [
+            i > 0 ? iconBtn('up', 'Move up', stop(() => edit(() => api(`/playlists/${id}/items/move`, { method: 'POST', body: { from: i, to: i - 1 } })))) : null,
+            i < n - 1 ? iconBtn('down', 'Move down', stop(() => edit(() => api(`/playlists/${id}/items/move`, { method: 'POST', body: { from: i, to: i + 1 } })))) : null,
+            iconBtn('x', 'Remove from playlist', stop(() => edit(() => api(`/playlists/${id}/items/${i}`, { method: 'DELETE' })))),
+          ].filter(Boolean),
+        })),
+      ),
+    );
+  }
+  playlistListeners.add((changed) => (changed === id || changed === null) && reload());
+  view.replaceChildren(spinner());
+  reload();
 }
 
 // --------------------------------------------------------------- settings --

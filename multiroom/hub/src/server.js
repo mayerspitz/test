@@ -13,6 +13,7 @@ import { JsonStore } from './store.js';
 import { YouTube } from './youtube.js';
 import { HomeTunnel, RemoteLibrary } from './home-tunnel.js';
 import { ZoneManager } from './zones.js';
+import { Playlists } from './playlists.js';
 
 export const VERSION = '0.1.0';
 
@@ -43,6 +44,7 @@ export async function createHub(overrides = {}) {
   const mediaUrl = (item) =>
     item.kind === 'track' ? `/media/tracks/${item.ref}` : item.kind === 'youtube' ? `/media/youtube/${item.ref}` : item.ref;
   const zones = new ZoneManager({ store, mediaUrl, log });
+  const playlists = new Playlists(store);
 
   // Cloud mode: the home Pi keeps a backup of speakers and queues, because free cloud
   // hosting starts with an empty disk after every restart. Bridges wait until it's restored.
@@ -62,6 +64,7 @@ export async function createHub(overrides = {}) {
       setTimeout(done, config.homeWaitMs ?? 25_000).unref();
       tunnel.on('hello', (msg) => {
         if (!restored && msg.state && !Object.keys(store.data.zones).length) zones.restore(msg.state);
+        if (!restored && msg.state?.playlists && !Object.keys(playlists.all).length) playlists.restore(msg.state.playlists);
         if (restored) tunnel.send({ type: 'state-save', state: store.data });
         done();
       });
@@ -91,7 +94,7 @@ export async function createHub(overrides = {}) {
   const homeStatus = () => (tunnel ? { online: tunnel.online, lastSeen: tunnel.lastSeen } : null);
   app.get('/api/health', (_req, res) =>
     res.json({ ok: true, version: VERSION, auth: Boolean(config.token), demo: Boolean(config.demo), home: homeStatus() }));
-  app.use('/api', requireAuth, createApi({ zones, library, youtube }));
+  app.use('/api', requireAuth, createApi({ zones, library, youtube, playlists }));
 
   // Media endpoints read by the bridges (and by the browser for previews).
   app.get('/media/tracks/:tid', requireAuth, (req, res, next) => {
@@ -234,6 +237,7 @@ export async function createHub(overrides = {}) {
   });
   zones.on('removed', (id) => broadcast({ type: 'zone-removed', id }));
   library.on('changed', () => broadcast({ type: 'library' }));
+  playlists.on('changed', (id) => broadcast({ type: 'playlists', id }));
   tunnel?.on('online', () => broadcast({ type: 'home', home: homeStatus() }));
   tunnel?.on('offline', () => broadcast({ type: 'home', home: homeStatus() }));
 
@@ -264,7 +268,7 @@ export async function createHub(overrides = {}) {
     });
   }
 
-  return { config, log, server, port, zones, library, youtube, store, close };
+  return { config, log, server, port, zones, library, youtube, playlists, store, close };
 }
 
 // Behind a proxy (Render, site.js) the real client address is in X-Forwarded-For.

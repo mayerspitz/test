@@ -58,11 +58,45 @@ function makeLibrary(dataDir) {
   });
 }
 
+// The demo has no real YouTube access (and no yt-dlp), so it gets a small pretend
+// YouTube Music catalog, clearly labelled, played with generated tones.
+const DEMO_YT = [
+  ['demoYTsng01', 'Night Drive (demo YouTube)', 'Synth City'],
+  ['demoYTsng02', 'Coastline (demo YouTube)', 'The Tides'],
+  ['demoYTsng03', 'Paper Moon (demo YouTube)', 'June & the Lanterns'],
+  ['demoYTsng04', 'Golden Hour (demo YouTube)', 'Solstice'],
+  ['demoYTsng05', 'Slow Motion (demo YouTube)', 'Kite Club'],
+  ['demoYTsng06', 'Rooftops (demo YouTube)', 'City Birds'],
+];
+const ytItem = ([id, title, artist], i) => ({ kind: 'youtube', ref: id, id, title, artist, duration: 95 + i * 17, artwork: null });
+const itemOf = (t) => makeItem({ kind: 'track', ref: t.id, title: t.title, artist: t.artist, album: t.album, duration: t.duration, artwork: `/api/library/tracks/${t.id}/cover` });
+
+function demoYouTube(hub) {
+  const all = DEMO_YT.map(ytItem).map(({ ref, ...it }) => it);
+  const byId = (id) => all.findIndex((x) => x.id === id);
+  return {
+    status: async () => ({ available: true, version: 'demo catalog' }),
+    search: async (q) => {
+      const words = String(q ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+      const hits = all.filter((x) => words.some((w) => `${x.title} ${x.artist}`.toLowerCase().includes(w)));
+      return hits.length ? hits : all;
+    },
+    resolve: async (url) => (/list=/.test(String(url)) ? { title: 'Demo YouTube playlist', items: all } : { title: all[0].title, items: [all[Math.max(0, byId(new URL(String(url), 'https://x').searchParams.get('v')))]] }),
+    // Play demo "YouTube" songs with the generated library tones.
+    proxy: async (req, res, id) => {
+      const tracks = hub.library.sorted();
+      const t = tracks[(Math.max(0, byId(id)) * 3 + 2) % tracks.length];
+      res.sendFile(hub.library.absPath(t), { acceptRanges: true, dotfiles: 'allow' });
+    },
+  };
+}
+
 // Starts a demo hub plus its simulated bridges. Also used by site.js to serve
 // the demo next to the real app from one web service.
 export async function startDemo({ dataDir = defaultDataDir, port = 8080, host, token = '' } = {}) {
   makeLibrary(dataDir);
   const hub = await createHub({ dataDir, port, host, token, quiet: true, demo: true });
+  Object.assign(hub.youtube, demoYouTube(hub));
   const hubUrl = `http://127.0.0.1:${hub.port}`;
 
   const agents = [];
@@ -99,6 +133,14 @@ export async function startDemo({ dataDir = defaultDataDir, port = 8080, host, t
     hub.zones.pause('bedroom');
     hub.zones.play('kids-room', items('Kids room MP3 player'));
   }
+  if (!Object.keys(hub.playlists.all).length) {
+    // A ready-made mixed playlist: library songs and (demo) YouTube songs, interleaved.
+    const local = hub.library.sorted();
+    const yt = DEMO_YT.map(ytItem);
+    hub.playlists.create('Demo mix: library + YouTube', [
+      itemOf(local[0]), makeItem(yt[0]), itemOf(local[6]), makeItem(yt[1]), makeItem(yt[2]), itemOf(local[11]),
+    ]);
+  }
 
   const stop = async () => {
     for (const { agent } of agents) await agent.stop().catch(() => {});
@@ -108,7 +150,16 @@ export async function startDemo({ dataDir = defaultDataDir, port = 8080, host, t
 }
 
 // Run directly: `npm run demo`
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) && process.env.REDIRECT_TO) {
+  // A retired demo address: send every visitor to the new one.
+  const target = process.env.REDIRECT_TO;
+  const { createServer } = await import('node:http');
+  createServer((req, res) => {
+    res.writeHead(req.url === '/api/health' ? 200 : 301, { Location: target, 'Content-Type': 'text/plain' });
+    res.end(`Moved to ${target}`);
+  }).listen(Number(process.env.PORT || 8080));
+  console.log(`Redirecting everything to ${target}`);
+} else if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const dataDir = path.resolve(process.env.MULTIROOM_DATA_DIR || defaultDataDir);
   const { hub, stop } = await startDemo({ dataDir, port: Number(process.env.PORT || 8080), token: process.env.MULTIROOM_TOKEN ?? '' });
   const ips = Object.values(os.networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => i.address);

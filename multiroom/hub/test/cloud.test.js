@@ -91,6 +91,7 @@ test('the cloud restarting with an empty disk gets speakers and queues back from
   const player = home.agents[0].player;
   const uid = player.uid;
   const oldPort = port;
+  await call('POST', '/api/playlists', { name: 'Mixed', items: [{ kind: 'youtube', id: 'AAAAAAAAAAA', title: 'YT' }] });
   await new Promise((r) => setTimeout(r, 800)); // let the backup reach the Pi
   await cloud.close();
   await startCloud(oldPort);
@@ -101,6 +102,7 @@ test('the cloud restarting with an empty disk gets speakers and queues back from
   assert.equal(z.queueLength, 2);
   assert.equal(z.current.title, 'Long song');
   assert.equal(player.uid, uid, 'the song kept playing through the restart');
+  assert.deepEqual((await call('GET', '/api/playlists')).data.map((p) => p.name), ['Mixed']);
   assert.equal(player.state, 'playing');
 });
 

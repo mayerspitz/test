@@ -23,15 +23,15 @@ The service is on Render (see `render.yaml`). Its only setting is `MULTIROOM_TOK
 
 ## 2. The home Pi
 
-**Parts:**
-- Raspberry Pi 4 (4 GB) with its power supply and a cooled case
+**Parts:** see [SHOPPING_LIST.md](SHOPPING_LIST.md). In short:
+- Raspberry Pi 5 (4 GB), or a Pi 4 4 GB, with its power supply and a case with a fan
 - 32 GB microSD card
 - 500 GB SSD
-- a powered USB hub, preferably multi-TT (see PLAN_DISCUSSION.md)
+- a 10-port powered USB hub
 - one TP-Link UB500 per speaker, each on a short USB extension cable
 
 1. Flash **Raspberry Pi OS Lite (64-bit)** with Raspberry Pi Imager. In its settings, set the hostname `audiohome`, turn on SSH, and enter your Wi-Fi (**5 GHz**).
-2. Connect the SSD to a **blue USB 3 port**, and the Bluetooth hub to a black USB 2 port, away from the SSD. Mount the SSD:
+2. Connect the SSD to one **blue USB 3 port** and the Bluetooth hub to the other (on a Pi 4, use a black USB 2 port for the hub), with the adapters spread out on their extension cables away from the SSD. Mount the SSD:
    ```bash
    lsblk -f                                   # find the SSD, e.g. /dev/sda1, note its UUID
    sudo mkfs.ext4 -L music /dev/sda1          # only if it's new/empty — this erases it
@@ -39,6 +39,7 @@ The service is on Render (see `render.yaml`). Its only setting is `MULTIROOM_TOK
    echo 'LABEL=music /srv/multiroom ext4 defaults,noatime,nofail 0 2' | sudo tee -a /etc/fstab
    sudo mount -a
    ```
+   Samsung T7 only, if the SSD ever drops out: add ` usb-storage.quirks=04e8:4001:u` to the end of the single line in `/boot/firmware/cmdline.txt`, then reboot.
 3. Turn off the Pi's built-in Bluetooth, so that only the USB adapters are used:
    ```bash
    echo "dtoverlay=disable-bt" | sudo tee -a /boot/firmware/config.txt && sudo reboot

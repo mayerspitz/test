@@ -69,6 +69,24 @@ A zone is one speaker. Every command answers with the updated zone.
 
 `kind: "url"` is the hook for your own app. It plays any HTTP(S) audio file or stream, such as internet radio or media served by your own server.
 
+## Playlists (mixed: library + YouTube + links)
+
+| Method & path | Body | Does |
+|---|---|---|
+| `GET /api/playlists` | | `[{ id, name, count, duration, kinds, artwork }]` |
+| `POST /api/playlists` | `{ "name": "Friday", "items": [ …same item shapes as play… ] }` | Create (items optional) |
+| `GET /api/playlists/:pid` | | `{ id, name, items: [{ kind, ref, title, artist, duration, artwork }] }` |
+| `PATCH /api/playlists/:pid` | `{ "name": "…" }` | Rename |
+| `DELETE /api/playlists/:pid` | | Delete the playlist (never the songs) |
+| `POST /api/playlists/:pid/items` | `{ "items": [...], "position": 3 }` | Add songs, collections, YouTube songs or whole YouTube playlists (resolve first), links, even other playlists |
+| `POST /api/playlists/:pid/items/move` | `{ "from": 5, "to": 0 }` | Reorder |
+| `DELETE /api/playlists/:pid/items/:index` | | Remove one entry |
+| `POST /api/zones/:id/queue/save` | `{ "name": "…" }` | Save a speaker's current queue as a playlist |
+
+Play a playlist with `{ "kind": "playlist", "id": "pl…" }` in `POST /api/zones/:id/play`. It works with `mode` (`replace` / `now` / `next` / `append`), `startIndex` and `shuffle`. Queues and playlists can mix every kind freely.
+
+**Play a YouTube Music playlist link:** `POST /api/youtube/resolve {"url": "<playlist link>"}` returns its songs. Send them to `/play` to play now, or with `"mode": "append"` to add them to the queue. The app's YouTube tab does exactly this.
+
 ## Library
 
 | Method & path | Does |

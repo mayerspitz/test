@@ -5,7 +5,7 @@ import { makeItem, shuffled } from './queue.js';
 
 // REST API used by the web app — and by any custom mobile app you build.
 // Every route answers JSON; see docs/API.md for the full reference.
-export function createApi({ zones, library, youtube }) {
+export function createApi({ zones, library, youtube, playlists }) {
   const api = express.Router();
   const wrap = (fn) => async (req, res, next) => {
     try {
@@ -35,7 +35,7 @@ export function createApi({ zones, library, youtube }) {
     const b = req.body ?? {};
     zones.zone(id);
     const mode = b.mode ?? 'replace';
-    let items = await expandItems(b.items, library);
+    let items = await expandItems(b.items, library, playlists);
     let startIndex = Number(b.startIndex) || 0;
     if (mode === 'replace' && b.shuffle !== undefined) zones.setMode(id, { shuffle: Boolean(b.shuffle) });
     if (mode === 'replace' && zones.zone(id).shuffle && items.length > 1) {
@@ -62,6 +62,30 @@ export function createApi({ zones, library, youtube }) {
   api.post('/zones/:id/queue/move', cmd((id, b) => zones.moveQueueItem(id, Number(b.from), Number(b.to))));
   api.delete('/zones/:id/queue/:index', cmd((id, _b, req) => zones.removeQueueItem(id, Number(req.params.index))));
   api.delete('/zones/:id/queue', cmd((id) => zones.clearQueue(id)));
+
+  // Save what a speaker has queued as a new playlist.
+  api.post('/zones/:id/queue/save', wrap((req) => {
+    const { items } = zones.getQueue(req.params.id);
+    if (!items.length) throw badRequest('The queue is empty');
+    return playlists.create(req.body?.name, items);
+  }));
+
+  // ---- saved playlists (mixed: library + YouTube + links) ----
+  api.get('/playlists', wrap(() => playlists.list()));
+  api.post('/playlists', wrap(async (req) => {
+    const items = req.body?.items?.length ? await expandItems(req.body.items, library, playlists) : [];
+    return playlists.create(req.body?.name, items);
+  }));
+  api.get('/playlists/:pid', wrap((req) => playlists.get(req.params.pid)));
+  api.patch('/playlists/:pid', wrap((req) => playlists.rename(req.params.pid, req.body?.name)));
+  api.delete('/playlists/:pid', wrap((req) => (playlists.remove(req.params.pid), ok)));
+  api.post('/playlists/:pid/items', wrap(async (req) => {
+    playlists.get(req.params.pid);
+    const items = await expandItems(req.body?.items, library, playlists);
+    return playlists.add(req.params.pid, items, req.body?.position);
+  }));
+  api.post('/playlists/:pid/items/move', wrap((req) => playlists.move(req.params.pid, Number(req.body?.from), Number(req.body?.to))));
+  api.delete('/playlists/:pid/items/:index', wrap((req) => playlists.removeItem(req.params.pid, Number(req.params.index))));
 
   // ---- library ----
   api.get('/library/collections', wrap(() => library.collections()));
@@ -106,7 +130,8 @@ export function createApi({ zones, library, youtube }) {
 //   { kind: 'collection', name }     every track of a collection, in folder order
 //   { kind: 'youtube', id, title?, artist?, duration?, artwork? }
 //   { kind: 'url', url, title? }     any http(s) audio stream / file (internet radio, your own app's media)
-export async function expandItems(raw, library) {
+//   { kind: 'playlist', id }         a saved playlist (may itself mix all of the above)
+export async function expandItems(raw, library, playlists) {
   if (!Array.isArray(raw) || !raw.length) throw badRequest('items must be a non-empty array');
   const out = [];
   for (const it of raw) {
@@ -116,6 +141,10 @@ export async function expandItems(raw, library) {
         break;
       case 'collection':
         out.push(...(await library.tracksOfCollection(String(it.name))).map(trackItem));
+        break;
+      case 'playlist':
+        if (!playlists) throw badRequest('Playlists are not available');
+        out.push(...playlists.get(String(it.id)).items.map((i) => makeItem(i)));
         break;
       case 'youtube':
         if (!/^[A-Za-z0-9_-]{11}$/.test(it.id ?? '')) throw badRequest('Invalid YouTube id');
