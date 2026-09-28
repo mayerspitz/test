@@ -8,7 +8,8 @@
   "scripts": {
     "start": "node src/server.js",
     "demo": "node scripts/demo.js",
-    "test": "node --test --test-concurrency=1 test/*.test.js"
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "site": "node src/site.js"
   },
   "engines": {
     "node": ">=20"

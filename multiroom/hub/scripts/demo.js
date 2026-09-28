@@ -10,12 +10,12 @@ import { Agent } from '../../agent/src/agent.js';
 import { createLogger } from '../../agent/src/log.js';
 import { SimulatedBluetooth, SimulatedPlayer } from '../../agent/src/simulated.js';
 import { createHub } from '../src/server.js';
+import { makeItem } from '../src/queue.js';
 import { coverArt } from './png.js';
 import { writeToneWav } from './tones.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = path.resolve(process.env.MULTIROOM_DATA_DIR || path.join(here, '..', 'demo-data'));
-const port = Number(process.env.PORT || 8080);
+const defaultDataDir = path.join(here, '..', 'demo-data');
 
 const COLLECTIONS = [
   { name: 'Kitchen MP3 player', colors: [[255, 138, 76], [214, 51, 108]], artist: 'Morning Crew', songs: ['Coffee First', 'Sunlight on the Counter', 'Toast & Jam', 'Slow Sunday', 'Radio in the Window'] },
@@ -33,7 +33,7 @@ const SPEAKERS = [
   { id: 'office', name: 'Office', speaker: 'Anker Soundcore 2', battery: null, offline: true },
 ];
 
-function makeLibrary() {
+function makeLibrary(dataDir) {
   const lib = path.join(dataDir, 'library');
   if (fs.existsSync(lib)) return;
   console.log('Generating the sample library (first run only)…');
@@ -58,58 +58,69 @@ function makeLibrary() {
   });
 }
 
-makeLibrary();
-const hub = await createHub({ dataDir, port, token: process.env.MULTIROOM_TOKEN ?? '', quiet: true, demo: true });
-const hubUrl = `http://127.0.0.1:${hub.port}`;
+// Starts a demo hub plus its simulated bridges. Also used by site.js to serve
+// the demo next to the real app from one web service.
+export async function startDemo({ dataDir = defaultDataDir, port = 8080, host, token = '' } = {}) {
+  makeLibrary(dataDir);
+  const hub = await createHub({ dataDir, port, host, token, quiet: true, demo: true });
+  const hubUrl = `http://127.0.0.1:${hub.port}`;
 
-const agents = [];
-for (const s of SPEAKERS) {
-  const cfg = {
-    hub: hubUrl,
-    token: hub.config.token,
-    zone: { id: s.id, name: s.name },
-    bluetooth: { type: 'simulated', pauseWhenDisconnected: true },
-    player: { type: 'simulated', audioDevice: 'auto' },
-  };
-  const agent = new Agent({
-    cfg,
-    player: new SimulatedPlayer(),
-    bluetooth: new SimulatedBluetooth({ name: s.speaker, battery: s.battery, connected: s.connected !== false }),
-    log: { info() {}, warn() {}, error: createLogger(s.id).error },
-  });
-  await agent.start();
-  agents.push({ s, agent });
-}
+  const agents = [];
+  for (const s of SPEAKERS) {
+    const cfg = {
+      hub: hubUrl,
+      token: hub.config.token,
+      zone: { id: s.id, name: s.name },
+      bluetooth: { type: 'simulated', pauseWhenDisconnected: true },
+      player: { type: 'simulated', audioDevice: 'auto' },
+    };
+    const agent = new Agent({
+      cfg,
+      player: new SimulatedPlayer(),
+      bluetooth: new SimulatedBluetooth({ name: s.speaker, battery: s.battery, connected: s.connected !== false }),
+      log: { info() {}, warn() {}, error: createLogger(s.id).error },
+    });
+    await agent.start();
+    agents.push({ s, agent });
+  }
 
-// Give bridges a moment to register, then start different music in a few rooms.
-await new Promise((r) => setTimeout(r, 800));
-for (const { s, agent } of agents) if (s.offline) await agent.stop();
-const fresh = Object.values(hub.zones.zones).every((z) => !z.queue.length);
-if (fresh) {
-  const collection = (name) => hub.library.tracksOfCollection(name);
-  const { makeItem } = await import('../src/queue.js');
-  const items = (name) => collection(name).map((t) => makeItem({ kind: 'track', ref: t.id, title: t.title, artist: t.artist, album: t.album, duration: t.duration, artwork: `/api/library/tracks/${t.id}/cover` }));
-  hub.zones.setVolume('kitchen', 55);
-  hub.zones.play('kitchen', items('Kitchen MP3 player'));
-  hub.zones.setVolume('patio', 70);
-  hub.zones.play('patio', items('Patio MP3 player'), { startIndex: 2 });
-  hub.zones.setVolume('bedroom', 25);
-  hub.zones.play('bedroom', items('Bedroom MP3 player'));
-  hub.zones.pause('bedroom');
-  hub.zones.play('kids-room', items('Kids room MP3 player'));
-}
+  // Give bridges a moment to register, then start different music in a few rooms.
+  await new Promise((r) => setTimeout(r, 800));
+  for (const { s, agent } of agents) if (s.offline) await agent.stop();
+  const fresh = Object.values(hub.zones.zones).every((z) => !z.queue.length);
+  if (fresh) {
+    const items = (name) => hub.library.tracksOfCollection(name).map((t) => makeItem({ kind: 'track', ref: t.id, title: t.title, artist: t.artist, album: t.album, duration: t.duration, artwork: `/api/library/tracks/${t.id}/cover` }));
+    hub.zones.setVolume('kitchen', 55);
+    hub.zones.play('kitchen', items('Kitchen MP3 player'));
+    hub.zones.setVolume('patio', 70);
+    hub.zones.play('patio', items('Patio MP3 player'), { startIndex: 2 });
+    hub.zones.setVolume('bedroom', 25);
+    hub.zones.play('bedroom', items('Bedroom MP3 player'));
+    hub.zones.pause('bedroom');
+    hub.zones.play('kids-room', items('Kids room MP3 player'));
+  }
 
-const ips = Object.values(os.networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => i.address);
-console.log(`\nDemo hub running with ${SPEAKERS.length} simulated speakers.`);
-console.log(`  On this computer:  http://localhost:${hub.port}`);
-for (const ip of ips) console.log(`  On your phone:     http://${ip}:${hub.port}   (same Wi-Fi)`);
-console.log('\nKids Room shows a disconnected speaker, Office an offline bridge. Ctrl+C to stop.');
-console.log(`Demo data lives in ${dataDir} — delete it to start fresh.\n`);
-
-for (const sig of ['SIGINT', 'SIGTERM']) {
-  process.on(sig, async () => {
+  const stop = async () => {
     for (const { agent } of agents) await agent.stop().catch(() => {});
     await hub.close();
-    process.exit(0);
-  });
+  };
+  return { hub, stop, dataDir };
+}
+
+// Run directly: `npm run demo`
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const dataDir = path.resolve(process.env.MULTIROOM_DATA_DIR || defaultDataDir);
+  const { hub, stop } = await startDemo({ dataDir, port: Number(process.env.PORT || 8080), token: process.env.MULTIROOM_TOKEN ?? '' });
+  const ips = Object.values(os.networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => i.address);
+  console.log(`\nDemo hub running with ${SPEAKERS.length} simulated speakers.`);
+  console.log(`  On this computer:  http://localhost:${hub.port}`);
+  for (const ip of ips) console.log(`  On your phone:     http://${ip}:${hub.port}   (same Wi-Fi)`);
+  console.log('\nKids Room shows a disconnected speaker, Office an offline bridge. Ctrl+C to stop.');
+  console.log(`Demo data lives in ${dataDir} — delete it to start fresh.\n`);
+  for (const sig of ['SIGINT', 'SIGTERM']) {
+    process.on(sig, async () => {
+      await stop();
+      process.exit(0);
+    });
+  }
 }

@@ -11,7 +11,8 @@
     "demo": "npm run demo -w hub",
     "start": "npm start -w hub",
     "test": "npm test --workspaces --if-present",
-    "discover": "node tools/discover-audio-systems.js"
+    "discover": "node tools/discover-audio-systems.js",
+    "site": "npm run site -w hub"
   },
   "engines": {
     "node": ">=20"

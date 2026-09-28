@@ -121,7 +121,8 @@ export async function createHub(overrides = {}) {
     ws.on('error', () => {});
     let zoneId = null;
     const handle = {
-      address: req.socket.remoteAddress?.replace(/^::ffff:/, '') ?? null,
+      // Behind a proxy (Render, site.js) the bridge's real address is in X-Forwarded-For.
+      address: (req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress)?.replace(/^::ffff:/, '') ?? null,
       send: (msg) => sendJson(ws, msg),
       close: (code, reason) => ws.close(code, reason),
     };
@@ -181,11 +182,15 @@ export async function createHub(overrides = {}) {
   zones.on('removed', (id) => broadcast({ type: 'zone-removed', id }));
   library.on('changed', () => broadcast({ type: 'library' }));
 
-  await new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(config.port, config.host, resolve);
-  });
-  const { port } = server.address();
+  // listen: false = don't open a port; a front server (site.js) hands requests to `server`.
+  let port = null;
+  if (overrides.listen !== false) {
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(config.port, config.host, resolve);
+    });
+    ({ port } = server.address());
+  }
 
   let closed = false;
   async function close() {
@@ -198,7 +203,8 @@ export async function createHub(overrides = {}) {
     store.flush();
     library.flush();
     await new Promise((resolve) => {
-      server.close(resolve);
+      if (server.listening) server.close(resolve);
+      else resolve();
       server.closeAllConnections?.();
     });
   }

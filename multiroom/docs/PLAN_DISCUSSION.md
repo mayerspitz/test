@@ -1,6 +1,6 @@
 # Hardware & setup plan: for discussion
 
-**Status: draft for discussion. Nothing here is decided until you confirm it.** Confirmed answers move into [OPEN_ITEMS.md](OPEN_ITEMS.md) ("Decisions made") and the other docs.
+**Status: draft for discussion. Items become decisions only after you confirm them; your round-2 answers are in §0.** Confirmed answers move into [OPEN_ITEMS.md](OPEN_ITEMS.md) ("Decisions made") and the other docs.
 
 This compares three sources:
 
@@ -9,6 +9,44 @@ This compares three sources:
 - what you asked for in this conversation
 
 You mentioned that your thinking has changed since the handoff. So wherever they disagree, I list it as a question rather than picking one.
+
+---
+
+## 0. Round 2: your answers (2026-09-28)
+
+| You said | What it means |
+|---|---|
+| **One central Pi** | Handoff design: one Raspberry Pi with one USB Bluetooth adapter per speaker, on a powered hub. The per-speaker bridge design is off the table (it stays possible in software as a fallback). |
+| **6 speakers if the budget difference is significant, otherwise as many as fit** | With one central Pi, each extra speaker costs one adapter (~$13) plus a cable. Going from 6 to 10 adds about **$80–90** in total (4 adapters, cables, a 13-port instead of 7-port hub). That's small, so **the plan is capacity for 10**, with adapters bought per speaker you actually have. The pilot (§3) shows how many run stably from one spot. |
+| **2 floors, 20 × 50 ft each** (~6 × 15 m) | From the middle of one floor, the farthest corner on the same floor is ~8 m away, and on the other floor ~9 m plus the floor itself. That is within Bluetooth range on paper; the floor is the unknown. **Put the Pi near the middle of the house, ideally by the stairwell.** If the pilot shows upstairs speakers drop out, we still keep one Pi: run **one active USB extension cable** (up to ~10–15 m) upstairs to a small powered hub holding the upstairs adapters. |
+| **Fully in the cloud, controlled from the cloud; the Pi connects over Wi-Fi** | The hub (app, queues, library index, uploads) runs on Render. The home Pi only makes **outgoing** connections to it (no router setup) and drives the speakers. See §6 for the parts I need you to choose. |
+| (earlier) demo + real app on one Render service | **Built** (`npm run site`): `demo.<domain>` → demo, `app.<domain>` → your real hub. It still needs a domain and a paid plan (see §6). |
+
+## 6. Cloud design: what's decided and what needs your choice
+
+```
+ Phone ──https──► app.<domain> (Render: hub + web app)  ◄──wss (outgoing from home)── Pi at home ──Bluetooth──► 6–10 speakers
+                        │                                                        │
+                   music library (see choice S)                          500 GB SSD: local copy/cache
+```
+
+**Consequences of going fully cloud (please read):**
+
+- **Render plan:** the free plan sleeps and wipes its disk, so the real hub needs the **Starter plan (~$7/month)**. The demo can share that same service.
+- **Internet outage:** the app is unreachable until the internet returns. With the local copy on the Pi's SSD (recommended below), the current songs keep playing.
+- **YouTube Music:** YouTube blocks most cloud-server addresses. The fix is to let **the Pi fetch YouTube audio itself**, from your home internet, and keep only search and queues in the cloud.
+- **Security:** the app becomes reachable from the internet, so it needs a proper login. Today it uses one shared access token.
+- **The Pi on Wi-Fi:** use the **5 GHz** network. With 10 Bluetooth radios next to it, 2.4 GHz Wi-Fi would compete with them. Ethernet is still better if a cable is ever possible.
+
+**Choice S: where the music library (up to 500 GB) lives**
+
+| | S1: Render disk | **S2: cloud object storage (Cloudflare R2)** + copy on the Pi's SSD (recommended) | S3: library only on the Pi's SSD, cloud does control only |
+|---|---|---|---|
+| Storage cost for 500 GB | ~$125/month | ~$7.50/month (no download fees) | $0 |
+| Total cloud cost (with Starter) | ~$132/month | **~$15/month** | ~$7/month |
+| Plays through an internet outage | No | Yes, from the Pi's copy | Yes |
+| Upload from the phone anywhere | Yes | Yes | Yes, relayed to the Pi (Pi must be online) |
+| Work needed | None (works today) | Storage connector + Pi sync (a few days) | Relay uploads + stream from Pi (a few days) |
 
 ---
 
@@ -100,6 +138,21 @@ Raspberry Pi prices rose in 2025–2026 with memory costs. The handoff's "$60–
 ---
 
 ## Questions to settle, in order
+
+**Round 2 (current), after your answers:**
+
+| # | Question |
+|---|---|
+| R1 | **Library storage: S1, S2 or S3?** (§6) Roughly how much music is on the MP3 players today (GB or number of songs)? |
+| R2 | **Domain:** do you own one to use for `demo.` / `app.`? If not, I'd suggest buying one (~$10–15/year). |
+| R3 | OK to move the Render service to the **paid Starter plan (~$7/month)** once the real hub goes live? |
+| R4 | Where would the Pi sit? Near the middle of the house or the stairwell? Is **5 GHz Wi-Fi** strong there? |
+| R5 | **Login** for `app.<domain>`: one password for the household, or separate logins per person? |
+| R6 | **YouTube Music:** keep it, with the Pi fetching the audio from your home internet (§6)? |
+| R7 | OK to start with the **3-adapter pilot** (§3), testing the farthest upstairs and downstairs spots? |
+| R8 | The speakers themselves: models, and mains or battery powered? |
+
+**Round 1 (partly answered: Q-B, Q-C, Q-H are covered above):**
 
 | # | Question |
 |---|---|

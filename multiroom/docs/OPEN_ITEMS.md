@@ -1,7 +1,7 @@
 # Open items
 
 What's still open for the Home Audio project, and whose turn it is. This is updated as we go.
-_Last updated: 2026-09-28_
+_Last updated: 2026-09-28 (round 2)_
 
 > **Hardware and setup are being finalized in [PLAN_DISCUSSION.md](PLAN_DISCUSSION.md).** It compares the earlier agent's handoff (10 speakers, one central Pi with 10 USB Bluetooth adapters, 500 GB SSD) with this build, and lists questions Q-A to Q-I. Nothing from the handoff counts as decided until you confirm it there.
 
@@ -16,6 +16,11 @@ _Last updated: 2026-09-28_
 | Control is **web-based** for now (phone browser / home-screen app) | You use Android, but the app doesn't depend on the phone platform. No native app for now |
 | Public demo on Render | Simulated speakers; for trying the app, not for real use |
 | Preview a song on your phone (🎧) before sending it to a speaker | Built |
+| **One central Raspberry Pi** with one USB Bluetooth adapter per speaker (2026-09-28) | Replaces the bridge-per-speaker design |
+| **Capacity for 10 speakers**, adapters bought per speaker | 6→10 adds only ~$80–90; the pilot confirms how many run stably |
+| House: 2 floors, 20 × 50 ft each | Pi near the middle / stairwell; active USB extension upstairs as the fallback |
+| **Hub fully in the cloud (Render)**; the home Pi connects out over Wi-Fi (5 GHz) | Details and choices: [PLAN_DISCUSSION.md §6](PLAN_DISCUSSION.md#6-cloud-design-whats-decided-and-what-needs-your-choice) |
+| `demo.<domain>` and `app.<domain>` served by one Render service | Built (`npm run site`); needs a domain and the Starter plan to go live |
 
 ## Done since the last update
 
@@ -36,8 +41,9 @@ _Last updated: 2026-09-28_
 | Q6 | Hub: reuse a computer/NAS you already own, or buy a Raspberry Pi 5? | Cost ($130 difference) | ⏳ waiting for you |
 | Q7 | YouTube Music via yt-dlp: are you comfortable with it (unofficial, may conflict with YouTube's terms)? Signed out (no per-account stream limit) or with your account? | Premium allows 1 stream per account, which conflicts when several rooms play YouTube | ⏳ waiting for you |
 | Q8 | Control from outside the house: OK to use Tailscale (free, no port forwarding)? | Remote access design | ⏳ waiting for you |
-| Q10 | **Demo + production on one Render app** (`demo.<name>` / `app.<name>`): which domain? Is production a hub at home reached through a tunnel (recommended), or a hub in the cloud? See [PLAN_DISCUSSION.md §4](PLAN_DISCUSSION.md#4-demo-and-production-on-one-render-app) | Changes the architecture and the monthly cost | ⏳ waiting for you |
-| Q11 | **6 or 10 speakers; one central box, bridges, or a hybrid?** Needs a speaker map: rooms, floors, distances. See [PLAN_DISCUSSION.md](PLAN_DISCUSSION.md) | Main hardware decision | ⏳ waiting for you |
+| Q10 | Demo + production on one Render app | Architecture | ✅ answered: fully cloud. Domain and plan are still open (R2, R3) |
+| Q11 | 6 or 10 speakers; central box or bridges | Main hardware decision | ✅ answered: one central Pi, capacity for 10 |
+| R1–R8 | **Round-2 questions:** library storage (S1/S2/S3), domain, paid plan, Pi location and 5 GHz Wi-Fi, login, YouTube via the Pi, pilot, speaker models. See [PLAN_DISCUSSION.md](PLAN_DISCUSSION.md#questions-to-settle-in-order) | Unblocks the cloud go-live and the parts order | ⏳ waiting for you |
 | Q9 | Features you'd like next, if any (see the backlog below) | Scope of the next round | ⏳ waiting for you |
 
 ## To do: needs real hardware (first pilot: 1 hub + 1 bridge + 1 speaker)
