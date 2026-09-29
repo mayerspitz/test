@@ -1,5 +1,7 @@
 # Hardware guide
 
+> **Superseded for your home.** This describes the earlier design with a small Pi next to each speaker. The chosen setup is one central Pi with the app in the cloud: see [SETUP_CLOUD.md](SETUP_CLOUD.md), [SHOPPING_LIST.md](SHOPPING_LIST.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). The volume section below still applies.
+
 **Goal:** up to 6 Bluetooth speakers, each playing its own music. Everything is controlled from a web app on your phone. The app sets volume on the stream only; each speaker's own volume stays exactly where you left it.
 
 ## The short answer

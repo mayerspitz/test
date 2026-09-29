@@ -1,5 +1,7 @@
 # Setup guide
 
+> **Superseded for your home.** This describes the earlier design with a small Pi next to each speaker. The chosen setup is one central Pi with the app in the cloud: see [SETUP_CLOUD.md](SETUP_CLOUD.md), [SHOPPING_LIST.md](SHOPPING_LIST.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). The volume section below still applies.
+
 Allow about an hour for the hub and 15 minutes per speaker bridge. You don't need to know Linux; every step is a command you copy and paste.
 
 ## 0. Try it first (5 minutes, any computer)

@@ -56,6 +56,7 @@ Open the printed address on your phone (same Wi-Fi) or at `http://localhost:8080
 
 | | |
 |---|---|
+| [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) | **Start here:** requirements, your home and devices, every decision with its reasoning, and where everything runs |
 | [docs/HARDWARE.md](docs/HARDWARE.md) | What to buy (off-the-shelf), costs, and why one small bridge per speaker |
 | [docs/SETUP.md](docs/SETUP.md) | Step-by-step install: hub, music import, pairing, bridges, phone, remote access, YouTube Music |
 | [docs/VERIFY_EXISTING_SYSTEM.md](docs/VERIFY_EXISTING_SYSTEM.md) | Check whether your current whole-home system can really play a different song per room, and why upstairs might differ |

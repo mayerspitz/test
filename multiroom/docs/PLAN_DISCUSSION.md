@@ -1,3 +1,5 @@
+> **Historical.** These questions were answered in rounds 2–3. The current decisions are in [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
+
 # Hardware & setup plan: for discussion
 
 **Status: draft for discussion. Items become decisions only after you confirm them; your round-2 answers are in §0.** Confirmed answers move into [OPEN_ITEMS.md](OPEN_ITEMS.md) ("Decisions made") and the other docs.
