@@ -16,6 +16,7 @@ in [docs/OPEN_ITEMS.md](docs/OPEN_ITEMS.md).
 |---|---|
 | [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) | Read first: rules, constraints, requirements, decision log, next steps |
 | [docs/SPEC.md](docs/SPEC.md) | The product and system specification |
+| [docs/FEASIBILITY.md](docs/FEASIBILITY.md) | How doable each goal is today, and the recommended path |
 | [docs/OPEN_ITEMS.md](docs/OPEN_ITEMS.md) | Questions for the owner (P1–P18), assumptions, to-dos |
 | [docs/LEGAL_AND_RIGHTS.md](docs/LEGAL_AND_RIGHTS.md) | Legal areas, a talent agreement outline, user terms (not legal advice) |
 | [docs/history/CONVERSATION_LOG.md](docs/history/CONVERSATION_LOG.md) | Every owner message, word for word |

@@ -44,3 +44,15 @@ Attachments: `New_Project_Handoff.pdf` (how to work in `mayerspitz/test`) and
   stops and switches.
 - Asked P1–P18, each with a default.
 - Archived the Jewish-wedding draft (v0.3) as a worked example.
+
+## 2026-09-29, message 7
+
+> Before I start answering and confirming, please tell me how doable is it to achieve perfect product to use at live large events with the end goals as I described?
+
+**Reply summary:** Gave an honest feasibility assessment, now in `docs/FEASIBILITY.md`.
+"Perfect at everything, any culture, day one" is not realistic; "excellent and reliable
+for a focused scope" is. Natural live behavior is the most doable part. The hardest parts
+are ornament-rich lead singing, fine-grained trait blending, automatic extraction, and
+the work outside software (content, talent, rights). Recommended path: lead with the
+engine, band and choir; keep musicians approving arrangements; prove singing and blending
+first; small events before large ones.

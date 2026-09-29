@@ -10,7 +10,7 @@ events and reacts to live commands like a real bandleader: natural stops with ri
 musical mid-song switches, vamps and cues. Users build **personas** and a **master
 model** (their dream band) from traits of consenting, paid talent, or from scratch in
 the **Creator Studio**. Full requirements: [SPEC.md](SPEC.md). Legal map:
-[LEGAL_AND_RIGHTS.md](LEGAL_AND_RIGHTS.md).
+[LEGAL_AND_RIGHTS.md](LEGAL_AND_RIGHTS.md). Feasibility: [FEASIBILITY.md](FEASIBILITY.md).
 
 ## 2. Stage
 
@@ -97,6 +97,7 @@ Nothing yet. No services, no URLs, no environment variables.
 - Verified: the component and legal facts marked VERIFIED in RESEARCH_NOTES.
 - Not verified: every latency target in SPEC section 9, singing quality, persona
   blending across talents, arrangement quality. All of them are PoC work (SPEC 12).
+- Feasibility judgment per goal (not measured): [FEASIBILITY.md](FEASIBILITY.md).
 
 ## 9. Next steps
 
