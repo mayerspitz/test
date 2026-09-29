@@ -50,6 +50,22 @@ _Last updated: 2026-09-29_
 - Storage (music size, disk free) in Settings
 - Bluetooth adapters can be named by their own address, so 10 identical USB adapters can't get mixed up after a reboot
 
+## Before buying: questions that can change the order (2026-09-29)
+
+| # | Question | What changes if the answer is… |
+|---|---|---|
+| P1 | How do the MP3 players reach the speakers today: **Bluetooth, or a cable (AUX)**? | Cable-only speakers need a small Bluetooth receiver each (~$20), or a different plan |
+| P2 | **List of speakers:** model (or photo of the label), and plugged in or battery? | Very new speakers that only do "LE Audio / Auracast" won't work with classic Bluetooth; battery speakers auto-switch off |
+| P3 | **How many play at the same time, usually and at most?** | Hub size and how many adapters to buy after the pilot |
+| P4 | **Farthest speaker:** which room/floor, any **outdoors** or behind a thick/exterior wall, from where the Pi would sit? | Range: may need a USB extension run or a second hub closer to those speakers |
+| P5 | **How much music** is on all the MP3 players combined (GB)? Any protected files (Audible, iTunes-DRM, protected WMA)? | 500 GB may be more (or less) than needed; protected files can't play |
+| P6 | **Your country**, and so which plugs / Amazon store? | Power supply plug type and product availability |
+| P7 | Do you **already own** any of: a Raspberry Pi, SSD, powered USB hub, microSD card, microSD card reader for your computer? | Don't buy twice; if your computer has no SD slot, add a ~$8 USB card reader |
+| P8 | **Pi 5 (recommended, ≈$10 more) or Pi 4?** | Changes items 1–3 of the list |
+| P9 | Will you run the setup commands yourself (copy/paste over SSH), or would you prefer a more "plug-in-and-go" setup? | I can make setup more automatic before the parts arrive |
+| P10 | Your router: does it show **separate 2.4 GHz and 5 GHz networks**, or one combined name? Any guest network or "client isolation"? | The Pi must stay on 5 GHz and reach the internet |
+| P11 | Will two speakers ever play **the same song in the same space** (e.g. open-plan rooms)? | Independent speakers aren't time-synced; "party mode" sync would be a software addition, not hardware |
+
 ## Questions for you
 
 | # | Question | Why it matters | Status |
