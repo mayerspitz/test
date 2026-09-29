@@ -15,7 +15,7 @@ echo "Home Audio system check — $(date '+%Y-%m-%d %H:%M')"
 
 # Software
 if have node && [ "$(node -p 'process.versions.node.split(".")[0]')" -ge 20 ]; then ok "Node.js $(node -v)"; else bad "Node.js 20+ missing — run the installer again"; fi
-for t in mpv pactl busctl bluetoothctl; do have "$t" && ok "$t installed" || bad "$t missing — run the installer again"; done
+for t in mpv pactl parec busctl bluetoothctl bt-agent; do have "$t" && ok "$t installed" || bad "$t missing — run the installer again"; done
 if have yt-dlp; then ok "yt-dlp $(yt-dlp --version 2>/dev/null)"; else warn "yt-dlp missing — YouTube Music won't work (run the installer again)"; fi
 have deno && ok "Deno $(deno --version 2>/dev/null | head -1 | awk '{print $2}') (for YouTube)" || warn "Deno missing — YouTube may fail (run the installer again)"
 [ -f "$CFG" ] && ok "Config found ($CFG)" || bad "No config at $CFG — run the installer"

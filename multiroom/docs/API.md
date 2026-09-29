@@ -87,6 +87,17 @@ Play a playlist with `{ "kind": "playlist", "id": "pl…" }` in `POST /api/zones
 
 **Play a YouTube Music playlist link:** `POST /api/youtube/resolve {"url": "<playlist link>"}` returns its songs. Send them to `/play` to play now, or with `"mode": "append"` to add them to the queue. The app's YouTube tab does exactly this.
 
+## Live inputs (players connected to the Pi)
+
+| Method & path | Does |
+|---|---|
+| `GET /api/inputs` | `[{ id, name, kind: "bluetooth" \| "line-in" }]`: players connected right now |
+| `GET /media/input/:id` | The live audio as an endless WAV stream |
+| `POST /api/setup/receiver` `{ "seconds": 180 }` | Make the Pi visible as "Home Audio" so a player can pair |
+| `DELETE /api/setup/receiver` | Stop accepting players (frees that adapter) |
+
+Play one on a speaker with `{ "kind": "input", "id": "<id>", "title": "Walkman" }` in `POST /api/zones/:id/play`.
+
 ## Library
 
 | Method & path | Does |

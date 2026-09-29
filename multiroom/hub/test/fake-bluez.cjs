@@ -18,7 +18,7 @@ if (tool === 'busctl') {
     const objs = {};
     for (const [n, a] of Object.entries(st.adapters)) objs[`/org/bluez/${n}`] = { 'org.bluez.Adapter1': { Address: v('s', a.address), Powered: v('b', true) } };
     for (const [k, d] of Object.entries(st.devices)) {
-      objs[`/org/bluez/${k}`] = { 'org.bluez.Device1': { Address: v('s', d.address), Alias: v('s', d.name), Icon: v('s', d.icon ?? ''), RSSI: v('n', d.rssi ?? -60), Paired: v('b', !!d.paired), Connected: v('b', !!d.connected), UUIDs: v('as', []) } };
+      objs[`/org/bluez/${k}`] = { 'org.bluez.Device1': { Address: v('s', d.address), Alias: v('s', d.name), Icon: v('s', d.icon ?? ''), RSSI: v('n', d.rssi ?? -60), Paired: v('b', !!d.paired), Trusted: v('b', !!d.trusted), Connected: v('b', !!d.connected), UUIDs: v('as', []) } };
     }
     console.log(JSON.stringify({ type: 'a{oa{sa{sv}}}', data: [objs] }));
   } else if (args.includes('StartDiscovery')) {
@@ -42,6 +42,15 @@ if (tool === 'busctl') {
       else if (prop === 'Percentage') process.exit(1);
       else console.log(`b ${!!d[prop.toLowerCase()]}`);
     }
+  } else if (args[0] === 'set-property') {
+    const prop = args[args.length - 3];
+    const value = args[args.length - 1];
+    if (devKey && prop === 'Trusted' && st.devices[devKey]) st.devices[devKey].trusted = value === 'true';
+    if (!devKey && prop === 'Discoverable' && value === 'true') {
+      st.discoverable = hci;
+      for (const d of st.incoming ?? []) st.devices[`${hci}/dev_${d.address.replace(/:/g, '_')}`] = { ...d, paired: true, connected: true };
+    }
+    save();
   } else if (args.includes('Connect')) {
     if (!st.devices[devKey]?.paired) process.exit(1);
     st.devices[devKey].connected = true;
@@ -63,8 +72,16 @@ if (tool === 'busctl') {
     }
     save();
   });
+} else if (tool === 'bt-agent') {
+  setTimeout(() => {}, 600000);
+} else if (tool === 'parec') {
+  const chunk = Buffer.alloc(19200, 7);
+  const tick = () => process.stdout.write(chunk, () => setTimeout(tick, 100));
+  tick();
 } else if (tool === 'pactl') {
-  if (args[0] === 'list') {
+  if (process.argv.includes('--format=json') && args.includes('sources')) {
+    console.log(JSON.stringify((st.sources ?? []).map((name) => ({ name, description: name.includes('bluez') ? 'Sony Walkman' : 'USB line-in' }))));
+  } else if (args[0] === 'list') {
     for (const d of Object.values(st.devices)) if (d.connected) console.log(`1\tbluez_output.${d.address.replace(/:/g, '_')}.1\tPipeWire\ts16le\tIDLE`);
   }
 }

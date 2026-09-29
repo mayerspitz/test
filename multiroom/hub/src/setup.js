@@ -45,19 +45,22 @@ export class SpeakerSetup extends EventEmitter {
       const name = path.split('/').pop();
       const address = val(a.Address);
       const owner = this.speakers.find((s) => [address, name].includes(String(s.bluetooth?.adapter ?? '').toUpperCase()) || s.bluetooth?.adapter === name);
-      out.push({ name, address, powered: Boolean(val(a.Powered)), usb: isUsb(name), speaker: owner?.zone.id ?? null });
+      const receiver = String(this.getConfig().receiver?.adapter ?? '').toUpperCase() === String(address).toUpperCase();
+      out.push({ name, address, powered: Boolean(val(a.Powered)), usb: isUsb(name), speaker: owner?.zone.id ?? null, receiver });
     }
     // The Pi's built-in radio shares its antenna with Wi-Fi: when USB adapters are present,
     // never use it for a speaker (even if the "disable-bt" setting didn't take effect).
     const anyUsb = out.some((a) => a.usb === true);
-    for (const a of out) a.usable = !(anyUsb && a.usb === false);
+    for (const a of out) a.usable = !(anyUsb && a.usb === false) && !a.receiver;
     return out.sort((x, y) => x.name.localeCompare(y.name, undefined, { numeric: true }));
   }
 
   async status() {
     const adapters = await this.adapters();
+    const rx = adapters.find((a) => a.receiver);
     return {
       adapters,
+      receiver: rx ? { adapter: rx.address, name: 'Home Audio', discoverableUntil: this.discoverableUntil ?? null, players: await this.#players(rx.name) } : null,
       free: adapters.filter((a) => a.usable && !a.speaker).length,
       speakers: this.speakers.map((s) => ({ id: s.zone.id, name: s.zone.name, speaker: s.bluetooth?.speaker ?? null, adapter: s.bluetooth?.adapter ?? null })),
     };
@@ -135,6 +138,80 @@ export class SpeakerSetup extends EventEmitter {
       this.emit('speaker-added', entry);
       return { id: entry.zone.id, name: label, adapter: adapter.address };
     });
+  }
+
+  // ---- Receiver: the Pi as a Bluetooth "speaker" that MP3 players / phones connect to ----
+  // One USB adapter is reserved for this. While it's discoverable, any player can pair
+  // (no PIN) and is trusted, so later it reconnects on its own. Its audio then appears
+  // under Live inputs and can be played on any speaker.
+  async startReceiver({ seconds = 120 } = {}) {
+    return this.#exclusive('receiver', async () => {
+      const cfg = this.getConfig();
+      const adapters = await this.adapters();
+      let rx = adapters.find((a) => a.receiver) ?? adapters.find((a) => a.usable && !a.speaker);
+      if (!rx) throw new HttpError(409, 'No free Bluetooth adapter for music players: plug in one more USB Bluetooth adapter.');
+      if (!rx.receiver) {
+        cfg.receiver = { adapter: rx.address };
+        this.saveConfig(cfg);
+      }
+      const secs = Math.min(Math.max(Number(seconds) || 120, 30), 600);
+      const path = `/org/bluez/${rx.name}`;
+      const set = (prop, type, value) => busctl(['set-property', 'org.bluez', path, 'org.bluez.Adapter1', prop, type, String(value)]).catch((e) => this.log.warn(`${prop}: ${e.message}`));
+      await set('Alias', 's', 'Home Audio');
+      await set('Pairable', 'b', 'true');
+      await set('PairableTimeout', 'u', 0);
+      await set('DiscoverableTimeout', 'u', secs);
+      await set('Discoverable', 'b', 'true');
+      this.discoverableUntil = Date.now() + secs * 1000;
+      // An agent that accepts pairing without a PIN, only while discoverable.
+      this.agent?.kill();
+      try {
+        this.agent = spawn('bt-agent', ['-c', 'NoInputNoOutput'], { stdio: 'ignore' });
+        this.agent.on('error', () => this.log.warn('bt-agent missing: run the installer again (bluez-tools)'));
+      } catch { /* reported above */ }
+      clearInterval(this.trustTimer);
+      this.trustTimer = setInterval(() => this.#trustNewPlayers(rx.name).catch(() => {}), 2000);
+      setTimeout(() => {
+        clearInterval(this.trustTimer);
+        this.#trustNewPlayers(rx.name).catch(() => {});
+        this.agent?.kill();
+        this.agent = null;
+        this.discoverableUntil = null;
+      }, secs * 1000).unref?.();
+      return { adapter: rx.address, name: 'Home Audio', seconds: secs };
+    });
+  }
+
+  async stopReceiver() {
+    const cfg = this.getConfig();
+    const addr = cfg.receiver?.adapter;
+    if (!addr) return { ok: true };
+    const rx = (await this.adapters()).find((a) => a.receiver);
+    if (rx) await busctl(['set-property', 'org.bluez', `/org/bluez/${rx.name}`, 'org.bluez.Adapter1', 'Discoverable', 'b', 'false']).catch(() => {});
+    clearInterval(this.trustTimer);
+    this.agent?.kill();
+    this.discoverableUntil = null;
+    delete cfg.receiver;
+    this.saveConfig(cfg);
+    return { ok: true };
+  }
+
+  async #players(adapterName) {
+    const objs = await this.#objects();
+    return Object.entries(objs)
+      .filter(([p, i]) => i['org.bluez.Device1'] && p.split('/')[3] === adapterName && val(i['org.bluez.Device1'].Paired))
+      .map(([, i]) => ({ address: val(i['org.bluez.Device1'].Address), name: val(i['org.bluez.Device1'].Alias) ?? val(i['org.bluez.Device1'].Address), connected: Boolean(val(i['org.bluez.Device1'].Connected)) }));
+  }
+
+  async #trustNewPlayers(adapterName) {
+    const objs = await this.#objects();
+    for (const [p, i] of Object.entries(objs)) {
+      const d = i['org.bluez.Device1'];
+      if (d && p.split('/')[3] === adapterName && val(d.Paired) && !val(d.Trusted)) {
+        await busctl(['set-property', 'org.bluez', p, 'org.bluez.Device1', 'Trusted', 'b', 'true']).catch(() => {});
+        this.log.info(`Music player paired: ${val(d.Alias) ?? val(d.Address)}`);
+      }
+    }
   }
 
   // Runs deploy/doctor.sh (the system check) and returns its report.

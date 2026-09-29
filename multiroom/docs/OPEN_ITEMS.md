@@ -50,6 +50,11 @@ _Last updated: 2026-09-29_
 - Storage (music size, disk free) in Settings
 - Bluetooth adapters can be named by their own address, so 10 identical USB adapters can't get mixed up after a reboot
 
+## Latest (2026-09-29)
+
+- **Sony STR-DH190 confirmed.** It's single-zone: A/B play the same song ([SPEAKERS.md](SPEAKERS.md)). It's used as one speaker. Optional: a small Bluetooth amp to make room B independent.
+- **New: live input.** Play from any MP3 player or phone (Bluetooth "Home Audio" receiver) or by cable (USB line-in) on any speaker ([LIVE_INPUT.md](LIVE_INPUT.md)). The parts list now has +1 UB500 for this.
+
 ## Answers received (2026-09-29)
 
 - **P1:** the MP3 players connect over **Bluetooth**

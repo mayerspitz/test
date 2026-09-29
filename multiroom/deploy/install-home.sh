@@ -20,7 +20,7 @@ done
 need_debian
 say "Installing audio, Bluetooth and system packages"
 sudo apt-get update
-sudo apt-get install -y ca-certificates curl unzip mpv pipewire pipewire-pulse wireplumber libspa-0.2-bluetooth pulseaudio-utils bluez
+sudo apt-get install -y ca-certificates curl unzip mpv pipewire pipewire-pulse wireplumber libspa-0.2-bluetooth pulseaudio-utils bluez bluez-tools
 ensure_node
 say "Installing JavaScript dependencies"
 (cd "$MULTIROOM_DIR" && npm ci --omit=dev --no-audit --no-fund --workspace hub --workspace agent)
@@ -34,7 +34,16 @@ sudo mkdir -p "$DATA_DIR/library"
 sudo chown -R "$USER": "$DATA_DIR" 2>/dev/null || true  # exFAT drives are already owned via mount options
 
 say "Enabling Bluetooth"
+# MP3 players / phones should see the Pi's "Home Audio" receiver as a loudspeaker.
+if ! grep -q '^Class = 0x240414' /etc/bluetooth/main.conf 2>/dev/null; then
+  if grep -qE '^#? *Class *=' /etc/bluetooth/main.conf; then
+    sudo sed -i -E 's/^#? *Class *=.*/Class = 0x240414/' /etc/bluetooth/main.conf
+  else
+    sudo sed -i '/^\[General\]/a Class = 0x240414' /etc/bluetooth/main.conf
+  fi
+fi
 sudo systemctl enable --now bluetooth
+sudo systemctl restart bluetooth
 NEW_GROUPS=0
 id -nG "$USER" | tr ' ' '\n' | grep -qx bluetooth || NEW_GROUPS=1
 sudo usermod -aG bluetooth,audio "$USER"

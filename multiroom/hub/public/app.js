@@ -190,6 +190,7 @@ let monitorUid = null;
 function mediaUrlOf(item) {
   if (item.kind === 'track') return withToken(`/media/tracks/${item.ref}`);
   if (item.kind === 'youtube') return withToken(`/media/youtube/${item.ref}`);
+  if (item.kind === 'input') return withToken(`/media/input/${encodeURIComponent(item.ref)}`);
   return item.ref;
 }
 
@@ -564,7 +565,7 @@ function updateCard(c, z) {
     c.art.replaceChildren(art ? '' : icon(cur?.kind === 'url' ? 'radio' : cur?.kind === 'youtube' ? 'youtube' : 'music'));
   }
   c.title.textContent = cur ? cur.title : 'Nothing playing';
-  c.artist.textContent = cur ? z.streamTitle || cur.artist || (cur.kind === 'url' ? 'Stream' : cur.kind === 'youtube' ? 'YouTube Music' : '') : 'Choose music to start';
+  c.artist.textContent = cur ? z.streamTitle || cur.artist || (cur.kind === 'url' ? 'Stream' : cur.kind === 'youtube' ? 'YouTube Music' : cur.kind === 'input' ? 'Live from a connected player' : '') : 'Choose music to start';
   c.nextUp.textContent = z.next ? `Next: ${z.next.title}` : '';
 
   const live = cur && !z.duration;
@@ -773,11 +774,12 @@ function openPickerFor(target) {
     ['library', 'Library', 'music'],
     ['youtube', 'YouTube', 'youtube'],
     ...(target.forZone ? [['playlists', 'Playlists', 'list']] : []),
-    ['link', 'Link', 'link'],
+    ['live', 'Live', 'radio'],
   ];
   const seg = h('div', { class: 'segmented', role: 'tablist' });
   const pane = h('div', { class: 'pane' });
   const show = (tab) => {
+    if (tab === 'link') tab = 'live';
     if (!tabs.some(([k]) => k === tab)) tab = 'library';
     storage.set('multiroom.pickerTab', tab);
     for (const b of seg.children) b.classList.toggle('active', b.dataset.tab === tab);
@@ -785,7 +787,7 @@ function openPickerFor(target) {
     if (tab === 'library') libraryPane(pane, target, s);
     else if (tab === 'youtube') youtubePane(pane, target, s);
     else if (tab === 'playlists') playlistsPane(pane, target, s);
-    else linkPane(pane, target, s);
+    else livePane(pane, target, s);
   };
   for (const [key, label, ic] of tabs) seg.append(h('button', { 'data-tab': key, role: 'tab', onclick: () => show(key) }, icon(ic), label));
   s.body.append(seg, pane);
@@ -1007,7 +1009,37 @@ async function playlistsPane(pane, target, sheet) {
   showAll();
 }
 
-const KIND_LABEL = { track: 'Library', youtube: 'YouTube', url: 'Link' };
+const KIND_LABEL = { track: 'Library', youtube: 'YouTube', url: 'Link', input: 'Live input' };
+
+// Live: a player connected to the Pi (Bluetooth or cable), plus any stream link.
+async function livePane(pane, target, sheet) {
+  const list = h('div', { class: 'list' }, spinner());
+  const links = h('div', { class: 'pane', style: 'padding:0' });
+  pane.append(h('div', { class: 'section-title', style: 'margin-top:4px' }, 'Players connected to the Pi'), list, h('div', { class: 'section-title' }, 'Or a stream link'), links);
+  linkPane(links, target, sheet);
+  let inputs = [];
+  try {
+    inputs = await api('/inputs');
+  } catch (err) {
+    list.replaceChildren(h('p', { class: 'hint' }, err.message));
+    return;
+  }
+  list.replaceChildren(
+    ...(inputs.length ? [] : [h('p', { class: 'hint' }, state.demo
+      ? 'In the demo nothing is connected. On your system, an MP3 player or phone connected to the Pi — by Bluetooth (“Home Audio”) or by cable — shows up here.'
+      : 'Nothing connected. Pair a player once in Settings → Connect a Bluetooth music player, then just turn Bluetooth on at the player; or plug it into the USB line-in adapter.')]),
+    ...inputs.map((i) => {
+      const item = { kind: 'input', id: i.id, title: i.name };
+      return itemRow({
+        fallback: i.kind === 'bluetooth' ? 'bluetooth' : 'radio',
+        title: i.name,
+        subtitle: i.kind === 'bluetooth' ? 'Bluetooth player · live' : 'Cable (line-in) · live',
+        onclick: () => target.go([item], { mode: 'now' }).then((ok) => ok && target.forZone && sheet.close()),
+        actions: [previewBtn({ kind: 'input', ref: i.id, title: i.name }), iconBtn('plus', target.forZone ? 'Add to queue' : 'Add to playlist', stop(() => target.add([item])))],
+      });
+    }),
+  );
+}
 
 function linkPane(pane, target, sheet) {
   const url = h('input', { class: 'field', type: 'url', placeholder: 'https://…', inputmode: 'url', autocomplete: 'off' });
@@ -1537,6 +1569,28 @@ async function renderSpeakerSetup(el) {
       h('button', { class: 'btn primary', disabled: !st.free, onclick: () => openAddSpeaker(refresh) }, icon('plus'), 'Add a speaker'),
       h('button', { class: 'btn', onclick: openSystemCheck }, icon('refresh'), 'Run system check'),
     ),
+    h('div', { class: 'section-title', style: 'margin:10px 0 0' }, 'Music players (live input)'),
+    st.receiver
+      ? h('div', { class: 'pane', style: 'padding:0' },
+          h('p', { class: 'muted', style: 'margin:0' }, `The Pi appears as “Home Audio” to Bluetooth players (adapter ${st.receiver.adapter}).`),
+          h('div', { class: 'list' }, ...(st.receiver.players.length ? st.receiver.players : [{ name: 'No players paired yet', address: '', none: true }]).map((p) => itemRow({
+            fallback: 'bluetooth',
+            title: p.name,
+            subtitle: p.none ? '' : `${p.connected ? 'Connected — find it under Choose music → Live' : 'Not connected — turn Bluetooth on at the player'}`,
+          }))),
+          h('div', { class: 'toolbar', style: 'margin:0' },
+            h('button', { class: 'btn', onclick: () => openReceiver(refresh) }, icon('plus'), 'Pair a player'),
+            h('button', { class: 'btn danger', onclick: async () => {
+              if (!confirm('Stop accepting Bluetooth players? Their adapter becomes free for a speaker.')) return;
+              await api('/setup/receiver', { method: 'DELETE' }).catch((e) => toast(e.message, true));
+              refresh();
+            } }, 'Turn off'),
+          ),
+        )
+      : h('div', { class: 'pane', style: 'padding:0' },
+          h('p', { class: 'muted', style: 'margin:0' }, 'Play from an MP3 player or phone: the Pi becomes a Bluetooth “speaker” it connects to (uses one USB adapter). Or plug a player into a USB line-in adapter — it appears automatically.'),
+          h('div', null, h('button', { class: 'btn', disabled: !st.free, onclick: () => openReceiver(refresh) }, icon('bluetooth'), 'Connect a Bluetooth music player')),
+        ),
   );
 }
 
@@ -1553,6 +1607,37 @@ async function openSystemCheck() {
   } catch (err) {
     s.body.replaceChildren(h('p', { class: 'hint' }, err.message));
   }
+}
+
+// Makes the Pi visible as “Home Audio” so an MP3 player / phone can pair to it.
+async function openReceiver(onDone) {
+  const s = openSheet({ title: 'Connect a music player', onClose: () => { clearInterval(timer); onDone?.(); } });
+  let timer;
+  s.body.append(spinner());
+  let r;
+  try {
+    r = await api('/setup/receiver', { method: 'POST', body: { seconds: 180 } });
+  } catch (err) {
+    s.body.replaceChildren(h('p', { class: 'hint' }, err.message));
+    return;
+  }
+  const list = h('div', { class: 'list' });
+  const until = Date.now() + r.seconds * 1000;
+  const left = h('span');
+  s.body.replaceChildren(h('div', { class: 'pane' },
+    h('p', { style: 'margin:0' }, '1. On your MP3 player or phone, open its ', h('strong', null, 'Bluetooth'), ' settings and search for devices.'),
+    h('p', { style: 'margin:0' }, '2. Choose ', h('strong', null, '“Home Audio”'), '. No PIN needed (if asked, try 0000).'),
+    h('p', { class: 'muted', style: 'margin:0' }, 'Visible for ', left, '. Paired players reconnect on their own later.'),
+    list,
+  ));
+  const poll = async () => {
+    left.textContent = `${Math.max(0, Math.round((until - Date.now()) / 1000))} s`;
+    const st = await api('/setup').catch(() => null);
+    const players = st?.receiver?.players ?? [];
+    list.replaceChildren(...players.map((p) => itemRow({ fallback: 'bluetooth', title: p.name, subtitle: p.connected ? 'Paired and connected ✓ — play it from Choose music → Live' : 'Paired' })));
+  };
+  poll();
+  timer = setInterval(poll, 3000);
 }
 
 function openAddSpeaker(onDone) {

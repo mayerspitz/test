@@ -4,10 +4,18 @@ Every speaker you add uses **one USB Bluetooth adapter**. Add them in the app: S
 
 | Speaker | Works? | Notes |
 |---|---|---|
-| **Sony stereo receiver** (looks like **STR-DH190**; please confirm the model on its back label) | ✅ Yes (Bluetooth input) | Counts as **one speaker in the app**. Its A/B speaker outputs both play what the app sends. Mains powered, so it's always available. |
+| **Sony STR-DH190** stereo receiver (confirmed) | ✅ Yes (Bluetooth input) | Counts as **one speaker in the app**. Its A/B speaker outputs both play what the app sends. Mains powered, so it's always available. |
 | **BolaButty X-GO C27-C** (Bluetooth 5.3, battery) | ✅ Yes | Battery powered: keep it on its USB-C charger when you can. Don't use its TWS mode (pairing two X-GOs together); each speaker should be its own speaker in the app. |
 
-## Sony receiver (STR-DH190)
+## Sony STR-DH190: can it play different songs in different rooms?
+
+**No, but your new system can give you that.** The STR-DH190 is a single-zone stereo receiver. It has one amplifier and one source at a time. The **SPEAKERS A / B** button only chooses *which* wired speakers play (A, B, or A+B); both always play the *same* song. There is no "Zone 2". (Sony's manual: "connect additional B speakers to enjoy audio in another location… select which speakers to use with the SPEAKERS A/B button"; [manual p. 13](https://www.manualslib.com/manual/1348935/Sony-Str-Dh190.html?page=13), [full manual](https://www.hifiengine.com/manual_library/sony/str-dh190.shtml).) The previous owner most likely had A and B in two rooms, playing the same music.
+
+**How to use it with the app:**
+- **As is (recommended to start):** the receiver is one speaker in the app, "Living room (Sony)". Whatever the app sends plays on A, B or A+B, as set by the receiver's SPEAKERS button.
+- **To make room B independent (optional, ≈ $60–100):** disconnect room B's speaker wires from the receiver's **B** terminals and connect them to a small **Bluetooth amplifier** instead (e.g. a Fosi Audio BT20A-class amp). Then room B becomes its own speaker in the app with its own songs, and the Sony keeps room A. Same wires, same speakers, just a second amp. First check which rooms A and B actually feed: switch SPEAKERS to A only, then B only, and walk around.
+
+## Sony receiver (STR-DH190): setup
 
 1. **Pairing:** press **BLUETOOTH** on the receiver (or its remote). The display shows "PAIRING" (hold the button if it only switches input). Then, in the app: Search → tap the receiver.
 2. **Turn on Bluetooth Standby** in the receiver's menu. It lets the Pi wake the receiver and switch it to the Bluetooth input automatically. It may be off by default.

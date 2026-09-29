@@ -18,9 +18,12 @@ Prices are typical, not checked live on Amazon. Search each name; the model numb
 | 8 | Short USB extension cables, 1 ft, 10-pack (spaces the adapters apart) | `USB 3.0 extension cable 1ft 10 pack` | 1 | $15 |
 
 | 9 | microSD card reader for your computer (to set up the card once) | `SanDisk MobileMate USB 3.0 microSD reader` | 1 | $10 |
+| 7b | **One more UB500**: the Pi's "Home Audio" receiver for Bluetooth MP3 players / phones ([LIVE_INPUT.md](LIVE_INPUT.md)) | `TP-Link UB500 Bluetooth adapter` | 1 | $13 |
+| 11 | *Optional, to play a player **by cable**:* USB line-in adapter + cable | `Behringer UCA202` and `3.5mm to 2 RCA cable` | 0–1 | $37 |
+| 12 | *Optional, to make the Sony's room B an **independent** zone:* a small Bluetooth amplifier for room B's speakers ([SPEAKERS.md](SPEAKERS.md)) | `Fosi Audio BT20A` (or similar Bluetooth amp) | 0–1 | $60–100 |
 | 10 | *Optional, for an outdoor or hard-to-reach speaker:* 16 ft **active** USB extension (puts one Bluetooth adapter by a window/wall facing that speaker) | `Cable Matters active USB 2.0 extension 16 ft` | 0–1 | $15 |
 
-**Pilot total ≈ $360** (≈ $375 with the outdoor cable). **Every extra speaker: one more UB500 (≈ $13).** Up to 10 on this hub.
+**Pilot total ≈ $375** with 3 speaker adapters + 1 for Bluetooth players (plus the optional items). **Every extra speaker: one more UB500 (≈ $13).** Up to 10 on this hub.
 
 **Range (your house, 20 × 50 ft per floor, Pi in the middle):** far end of the same floor ≈ 25–27 ft (8 m), which is fine. Far end of the other floor ≈ 29 ft (9 m) through the floor, usually fine, and the pilot confirms it. Outdoors adds an exterior wall, which is what item 10 is for. Wi-Fi extenders don't help here, because the speakers use Bluetooth, not Wi-Fi.
 

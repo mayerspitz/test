@@ -5,7 +5,7 @@ import { makeItem, shuffled } from './queue.js';
 
 // REST API used by the web app — and by any custom mobile app you build.
 // Every route answers JSON; see docs/API.md for the full reference.
-export function createApi({ zones, library, youtube, playlists, setup }) {
+export function createApi({ zones, library, youtube, playlists, setup, inputs }) {
   const api = express.Router();
   const wrap = (fn) => async (req, res, next) => {
     try {
@@ -92,9 +92,14 @@ export function createApi({ zones, library, youtube, playlists, setup }) {
     api.get('/setup', wrap(() => setup.status()));
     api.get('/setup/check', wrap(() => setup.check()));
     api.post('/setup/scan', wrap((req) => setup.scan(req.body?.seconds)));
+    api.post('/setup/receiver', wrap((req) => setup.startReceiver({ seconds: req.body?.seconds })));
+    api.delete('/setup/receiver', wrap(() => setup.stopReceiver()));
     api.post('/setup/speakers', wrap((req) => setup.add({ address: req.body?.address, name: req.body?.name })));
     api.delete('/setup/speakers/:sid', wrap((req) => setup.remove(req.params.sid)));
   }
+
+  // ---- live inputs (a Bluetooth or cable-connected player on the Pi) ----
+  api.get('/inputs', wrap(() => inputs?.list() ?? []));
 
   // ---- library ----
   api.get('/library/collections', wrap(() => library.collections()));
@@ -166,6 +171,10 @@ export async function expandItems(raw, library, playlists) {
           duration: num(it.duration),
           artwork: /^https:\/\//.test(it.artwork ?? '') ? it.artwork : `https://i.ytimg.com/vi/${it.id}/hqdefault.jpg`,
         }));
+        break;
+      case 'input':
+        if (typeof it.id !== 'string' || !/^[\w.:-]{1,200}$/.test(it.id)) throw badRequest('Invalid live input');
+        out.push(makeItem({ kind: 'input', ref: it.id, title: str(it.title) || 'Live input' }));
         break;
       case 'url': {
         let u;

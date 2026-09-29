@@ -26,7 +26,7 @@ const call = async (method, p, body) => {
 };
 
 before(async () => {
-  for (const tool of ['busctl', 'bluetoothctl', 'pactl']) {
+  for (const tool of ['busctl', 'bluetoothctl', 'pactl', 'parec', 'bt-agent']) {
     fs.writeFileSync(path.join(bin, tool), `#!/usr/bin/env node\nrequire(${JSON.stringify(path.join(here, 'fake-bluez.cjs'))});\n`, { mode: 0o755 });
   }
   fs.writeFileSync(stateFile, JSON.stringify({
@@ -36,6 +36,8 @@ before(async () => {
       { address: '11:22:33:44:55:66', name: "Someone's phone", icon: 'phone', rssi: -40 },
       { address: 'C0:28:8D:00:00:BB', name: 'UE BOOM 3', icon: 'audio-card', rssi: -70 },
     ],
+    incoming: [{ address: '00:0A:95:00:00:11', name: 'Sony Walkman' }],
+    sources: ['bluez_input.00_0A_95_00_00_11.2', 'alsa_input.usb-Burr-Brown_USB_Audio_CODEC-00.analog-stereo', 'alsa_output.platform-107c706400.hdmi.monitor'],
   }));
   process.env.FAKE_BLUEZ_STATE = stateFile;
   process.env.PATH = `${bin}:${oldPath}`;
@@ -108,4 +110,42 @@ test('the system check runs on the Pi and its report reaches the app', async () 
   assert.equal(r.status, 200);
   assert.match(r.data.report, /Home Audio system check/);
   assert.match(r.data.report, /Node\.js/);
+});
+
+test('receiver mode: an MP3 player pairs to "Home Audio" and becomes a live input', async () => {
+  const before = (await call('GET', '/api/setup')).data.free;
+  const r = await call('POST', '/api/setup/receiver', { seconds: 60 });
+  assert.equal(r.status, 200, JSON.stringify(r.data));
+  assert.equal(r.data.name, 'Home Audio');
+  const st = await waitFor(async () => {
+    const s = (await call('GET', '/api/setup')).data;
+    return s.receiver?.players.length && s;
+  }, { message: 'player paired' });
+  assert.equal(st.receiver.players[0].name, 'Sony Walkman');
+  assert.equal(st.free, before - 1, 'the receiver adapter is reserved, not used for a speaker');
+  await waitFor(() => JSON.parse(fs.readFileSync(stateFile, 'utf8')).devices[`${st.adapters.find((a) => a.receiver).name}/dev_00_0A_95_00_00_11`].trusted, { message: 'player trusted' });
+  const inputs = (await call('GET', '/api/inputs')).data;
+  assert.deepEqual(inputs.map((i) => [i.name, i.kind]), [['Sony Walkman', 'bluetooth'], ['USB line-in', 'line-in']]);
+});
+
+test('a live input streams through the app as audio, and can be queued on a speaker', async () => {
+  const id = 'bluez_input.00_0A_95_00_00_11.2';
+  const ac = new AbortController();
+  const res = await fetch(`http://127.0.0.1:${cloud.port}/media/input/${encodeURIComponent(id)}?token=${PW}`, { signal: ac.signal });
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('content-type'), 'audio/wav');
+  const reader = res.body.getReader();
+  let got = Buffer.alloc(0);
+  while (got.length < 20000) got = Buffer.concat([got, Buffer.from((await reader.read()).value)]);
+  ac.abort();
+  assert.equal(got.subarray(0, 4).toString(), 'RIFF');
+  assert.equal((await fetch(`http://127.0.0.1:${cloud.port}/media/input/nope?token=${PW}`)).status, 404);
+  const play = await call('POST', '/api/zones/kitchen/play', { items: [{ kind: 'input', id, title: 'Sony Walkman' }] });
+  assert.equal(play.status, 200, JSON.stringify(play.data));
+  assert.equal(play.data.current.kind, 'input');
+  assert.equal(play.data.current.title, 'Sony Walkman');
+  assert.equal((await call('POST', '/api/zones/kitchen/play', { items: [{ kind: 'input', id: '../../etc' }] })).status, 400);
+  const off = await call('DELETE', '/api/setup/receiver');
+  assert.equal(off.status, 200);
+  assert.equal((await call('GET', '/api/setup')).data.receiver, null);
 });

@@ -16,6 +16,7 @@ import { YouTube } from './youtube.js';
 import { HomeTunnel, RemoteLibrary } from './home-tunnel.js';
 import { ZoneManager } from './zones.js';
 import { Playlists } from './playlists.js';
+import { LiveInputs } from './inputs.js';
 
 export const VERSION = '0.1.0';
 
@@ -41,10 +42,14 @@ export async function createHub(overrides = {}) {
     await library.init();
     youtube = new YouTube({ bin: config.ytdlpPath, extraArgs: config.ytdlpArgs, log });
   }
+  const inputs = overrides.inputs ?? new LiveInputs({ log });
 
   // Bridges get paths relative to the hub (they know the hub URL); plain URLs pass through.
   const mediaUrl = (item) =>
-    item.kind === 'track' ? `/media/tracks/${item.ref}` : item.kind === 'youtube' ? `/media/youtube/${item.ref}` : item.ref;
+    item.kind === 'track' ? `/media/tracks/${item.ref}`
+      : item.kind === 'youtube' ? `/media/youtube/${item.ref}`
+        : item.kind === 'input' ? `/media/input/${encodeURIComponent(item.ref)}`
+          : item.ref;
   const zones = new ZoneManager({ store, mediaUrl, log });
   const playlists = new Playlists(store);
 
@@ -104,14 +109,14 @@ export async function createHub(overrides = {}) {
     // Before the JSON parser: these carry streams (uploads, audio) straight through.
     app.get('/home/tunnel/:rid/body', requireAuth, tunnel.handleBodyRequest);
     app.post('/home/tunnel/:rid/response', requireAuth, tunnel.handleResponse);
-    app.use(['/api/library', '/api/youtube', '/api/system', '/api/setup', '/media'], requireAuth, tunnel.forward);
+    app.use(['/api/library', '/api/youtube', '/api/system', '/api/setup', '/api/inputs', '/media'], requireAuth, tunnel.forward);
   }
   app.use(express.json({ limit: '2mb' }));
 
   const homeStatus = () => (tunnel ? { online: tunnel.online, lastSeen: tunnel.lastSeen } : null);
   app.get('/api/health', (_req, res) =>
     res.json({ ok: true, version: VERSION, auth: Boolean(config.token), demo: Boolean(config.demo), home: homeStatus() }));
-  app.use('/api', requireAuth, createApi({ zones, library, youtube, playlists, setup: overrides.setup }));
+  app.use('/api', requireAuth, createApi({ zones, library, youtube, playlists, setup: overrides.setup, inputs }));
 
   // Media endpoints read by the bridges (and by the browser for previews).
   app.get('/media/tracks/:tid', requireAuth, (req, res, next) => {
@@ -124,6 +129,14 @@ export async function createHub(overrides = {}) {
     res.sendFile(library.absPath(t), { acceptRanges: true, dotfiles: 'allow', headers: { 'Cache-Control': 'no-store' } }, (err) => {
       if (err && !res.headersSent) next(err);
     });
+  });
+  app.get('/media/input/:iid', requireAuth, async (req, res, next) => {
+    try {
+      await inputs.stream(req, res, req.params.iid);
+    } catch (err) {
+      if (res.headersSent) res.destroy();
+      else next(err);
+    }
   });
   app.get('/media/youtube/:vid', requireAuth, async (req, res, next) => {
     try {
