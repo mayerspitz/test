@@ -1,6 +1,9 @@
 # Rules for AI agents working on LiveBand
 
 Read `docs/PROJECT_CONTEXT.md` first. It is the single source of truth.
+The full original handoff documents (PDF + text) are in `docs/handoff/`. This file
+copies sections 1, 3 and 4 of "New Project Handoff". Sections 2 (layout), 5 (tooling),
+6 (moving to its own repo) and 7 (first steps) are there in full.
 
 ## 1. Isolation (non-negotiable)
 

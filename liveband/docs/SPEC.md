@@ -371,6 +371,9 @@ consented data. Quality depends on PoC-2.
   as network services. The real-time ones (player, renderer, effects, instrument and kit
   runtimes) are libraries linked into one venue-engine process (P6).
 
+The complete decision register (D1–D31, with reasons and rejected alternatives) is in
+[PROJECT_CONTEXT.md §6](PROJECT_CONTEXT.md).
+
 **Rejected alternatives**
 
 - **End-to-end audio generation** (text-to-song models that output mixed audio): no

@@ -56,3 +56,18 @@ are ornament-rich lead singing, fine-grained trait blending, automatic extractio
 the work outside software (content, talent, rights). Recommended path: lead with the
 engine, band and choir; keep musicians approving arrangements; prove singing and blending
 first; small events before large ones.
+
+## 2026-09-29, message 8
+
+> Save every single detail, and entire specs and decisions with reasoning, entire handoff, all into the repo, so we can continue later and anywhere without losing any context
+
+**Reply summary:** Saved into the repo:
+- both handoff PDFs, plus full-text copies and a comparison (`docs/handoff/`);
+- every assistant reply word for word (`history/ASSISTANT_REPLIES.md`);
+- the raw fact-check report and its brief (`history/research/`);
+- a complete decision register with reasons and rejected alternatives (PROJECT_CONTEXT
+  §6: O1–O17, G1–G7, D1–D31, superseded items, spec version history);
+- a document map and resume instructions with a one-line prompt for new sessions
+  (PROJECT_CONTEXT §9–10, README).
+
+All of it was committed and pushed.
