@@ -1,0 +1,46 @@
+# dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# build output
+dist/
+build/
+out/
+bin/
+obj/
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+
+# environment and secrets
+.env
+.env.*
+!.env.example
+
+# large or generated media (samples, renders, models live in object storage, not git)
+*.wav
+*.flac
+*.aiff
+*.mp3
+*.ogg
+*.onnx
+*.pt
+*.ckpt
+*.safetensors
+renders/
+cache/
+
+# logs
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
