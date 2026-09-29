@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
@@ -112,4 +113,19 @@ test('with the Pi offline the library answers 503 with a clear message', async (
   const r = await call('GET', '/api/library/collections');
   assert.equal(r.status, 503);
   assert.match(r.data.error, /home Pi is offline/);
+});
+
+test('one-line installer: public script with the app address, password-protected software bundle', async () => {
+  const script = await (await fetch(`http://127.0.0.1:${port}/install.sh`)).text();
+  assert.match(script, new RegExp(`CLOUD="http://127.0.0.1:${port}"`));
+  assert.match(script, /auto-setup\.sh/);
+  assert.equal((await fetch(`http://127.0.0.1:${port}/install/bundle.tgz`)).status, 401);
+  const res = await fetch(`http://127.0.0.1:${port}/install/bundle.tgz`, { headers: auth });
+  assert.equal(res.status, 200);
+  const tgz = Buffer.from(await res.arrayBuffer());
+  const list = execFileSync('tar', ['tz'], { input: tgz, maxBuffer: 64 * 1024 * 1024 }).toString();
+  assert.ok(list.includes('multiroom/deploy/auto-setup.sh'));
+  assert.ok(list.includes('multiroom/hub/src/home.js'));
+  assert.ok(list.includes('multiroom/package-lock.json'));
+  assert.ok(!list.includes('node_modules/'), 'no node_modules in the bundle');
 });

@@ -78,7 +78,7 @@ multiroom/
 
 ## Tests
 
-`npm test` runs 55 tests across the three packages.
+`npm test` runs 61 tests across the three packages.
 
 - **Hub**
   - queue logic, library indexing and uploads (including path-traversal attempts), HTTP Range streaming and auth

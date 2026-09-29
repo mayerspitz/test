@@ -404,7 +404,8 @@ function renderSpeakers() {
         h('h2', null, 'No speakers yet'),
         ...(state.home
           ? [
-              h('p', null, state.home.online ? 'Your home Pi is connected. Add speakers to its configuration and they appear here.' : 'Waiting for your home Pi to connect.'),
+              h('p', null, state.home.online ? 'Your home Pi is connected — add your first speaker.' : 'Waiting for your home Pi to connect.'),
+              state.home.online ? h('p', null, h('button', { class: 'btn primary', onclick: () => openAddSpeaker() }, icon('plus'), 'Add a speaker')) : null,
               h('p', { class: 'muted' }, 'Set it up with ', h('code', null, 'deploy/install-home.sh'), '. Meanwhile, try the ', h('a', { href: '/demo/' }, 'demo'), '.'),
             ]
           : [
@@ -1502,12 +1503,99 @@ async function renderPlaylist(id) {
   reload();
 }
 
+// ---------------------------------------------------------- speaker setup --
+// Add or remove Bluetooth speakers from the app: the home Pi scans, pairs the chosen
+// speaker to a free USB Bluetooth adapter and starts playing to it.
+async function renderSpeakerSetup(el) {
+  let st;
+  try {
+    st = await api('/setup');
+  } catch (err) {
+    el.replaceChildren(h('p', { class: 'muted', style: 'margin:0' },
+      state.demo ? 'In the demo the speakers are simulated. On your real system this is where you add and remove Bluetooth speakers.' : err.message));
+    return;
+  }
+  const refresh = () => renderSpeakerSetup(el);
+  el.replaceChildren(
+    h('p', { class: 'muted', style: 'margin:0' }, `${plural(st.adapters.length, 'Bluetooth adapter')} on the Pi · ${st.free} free${st.free ? '' : ' — plug in another USB Bluetooth adapter to add a speaker'}`),
+    h('div', { class: 'list' }, ...st.speakers.map((sp) => itemRow({
+      fallback: 'speaker',
+      title: sp.name,
+      subtitle: `${sp.speaker ?? ''} · adapter ${sp.adapter ?? ''}`,
+      actions: [iconBtn('trash', `Remove ${sp.name}`, stop(async () => {
+        if (!confirm(`Remove “${sp.name}”? The Pi forgets the speaker and frees its adapter.`)) return;
+        try {
+          await api(`/setup/speakers/${encodeURIComponent(sp.id)}`, { method: 'DELETE' });
+          toast(`Removed ${sp.name}`);
+          refresh();
+        } catch (err) {
+          toast(err.message, true);
+        }
+      }))],
+    }))),
+    h('div', null, h('button', { class: 'btn primary', disabled: !st.free, onclick: () => openAddSpeaker(refresh) }, icon('plus'), 'Add a speaker')),
+  );
+}
+
+function openAddSpeaker(onDone) {
+  const s = openSheet({ title: 'Add a speaker', tall: true });
+  const body = h('div', { class: 'pane' });
+  s.body.append(body);
+  const start = () => body.replaceChildren(
+    h('p', { style: 'margin:0' }, '1. Turn the speaker on and put it in ', h('strong', null, 'pairing mode'), ' (usually: hold its Bluetooth button until the light blinks).'),
+    h('p', { class: 'muted', style: 'margin:0' }, 'If it was connected to a phone or MP3 player before, switch Bluetooth off on that device first.'),
+    h('button', { class: 'btn primary', onclick: scan }, icon('search'), '2. Search for speakers'),
+  );
+  async function scan() {
+    body.replaceChildren(spinner(), h('p', { class: 'hint', style: 'text-align:center' }, 'Searching for about 12 seconds…'));
+    let found;
+    try {
+      found = await api('/setup/scan', { method: 'POST', body: {} });
+    } catch (err) {
+      body.replaceChildren(h('p', { class: 'hint' }, err.message), h('button', { class: 'btn', onclick: start }, 'Back'));
+      return;
+    }
+    body.replaceChildren(
+      h('p', { style: 'margin:0' }, found.length ? '3. Tap your speaker:' : 'Nothing found. Is the speaker in pairing mode?'),
+      h('div', { class: 'list' }, ...found.map((d) => itemRow({
+        fallback: d.audio ? 'speaker' : 'bluetooth',
+        title: d.name,
+        subtitle: `${d.audio ? 'Speaker / audio' : 'Other device'} · ${d.address}${d.rssi !== null ? ` · signal ${d.rssi} dBm` : ''}`,
+        onclick: () => confirmAdd(d),
+      }))),
+      h('button', { class: 'btn', onclick: scan }, icon('refresh'), 'Search again'),
+    );
+  }
+  function confirmAdd(d) {
+    const name = h('input', { class: 'field', value: d.name, maxlength: 60, dir: 'auto' });
+    body.replaceChildren(
+      h('label', { class: 'stack' }, 'Name in the app (e.g. the room)', name),
+      h('button', { class: 'btn primary', onclick: async () => {
+        body.replaceChildren(spinner(), h('p', { class: 'hint', style: 'text-align:center' }, `Pairing ${d.name}… this can take up to 30 seconds.`));
+        try {
+          const r = await api('/setup/speakers', { method: 'POST', body: { address: d.address, name: name.value } });
+          toast(`${r.name} added`);
+          s.close();
+          onDone?.();
+        } catch (err) {
+          body.replaceChildren(h('p', { class: 'hint' }, err.message), h('button', { class: 'btn', onclick: start }, 'Try again'));
+        }
+      } }, icon('plus'), 'Add speaker'),
+      h('button', { class: 'btn', onclick: scan }, 'Back'),
+    );
+  }
+  start();
+}
+
 // --------------------------------------------------------------- settings --
 async function renderSettings() {
   const view = $('#view');
   const token = h('input', { class: 'field', type: 'password', value: state.token, placeholder: 'Password', autocomplete: 'current-password' });
   const about = h('dl', { class: 'kv' });
+  const btSection = h('div', { class: 'card pane' }, spinner());
   view.replaceChildren(
+    h('div', { class: 'section-title' }, 'Speakers & Bluetooth'),
+    btSection,
     h('div', { class: 'section-title' }, 'All speakers'),
     h('div', { class: 'card toolbar', style: 'margin:0' },
       h('button', { class: 'btn', onclick: () => api('/zones/pause-all', { method: 'POST' }).then(() => toast('Paused everything'), (e) => toast(e.message, true)) }, icon('pause'), 'Pause all'),
@@ -1529,6 +1617,7 @@ async function renderSettings() {
       h('p', { style: 'margin:0' }, 'Android (Chrome): ⋮ menu → Add to Home screen.'),
     ),
   );
+  renderSpeakerSetup(btSection);
   const zones = [...state.zones.values()];
   if (!state.youtube) state.youtube = await api('/youtube/status').catch(() => ({ available: false }));
   const sys = await api('/system').catch(() => null);

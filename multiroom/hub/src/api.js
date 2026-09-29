@@ -5,7 +5,7 @@ import { makeItem, shuffled } from './queue.js';
 
 // REST API used by the web app — and by any custom mobile app you build.
 // Every route answers JSON; see docs/API.md for the full reference.
-export function createApi({ zones, library, youtube, playlists }) {
+export function createApi({ zones, library, youtube, playlists, setup }) {
   const api = express.Router();
   const wrap = (fn) => async (req, res, next) => {
     try {
@@ -86,6 +86,14 @@ export function createApi({ zones, library, youtube, playlists }) {
   }));
   api.post('/playlists/:pid/items/move', wrap((req) => playlists.move(req.params.pid, Number(req.body?.from), Number(req.body?.to))));
   api.delete('/playlists/:pid/items/:index', wrap((req) => playlists.removeItem(req.params.pid, Number(req.params.index))));
+
+  // ---- speaker setup (home Pi only): adapters, scan, pair, remove ----
+  if (setup) {
+    api.get('/setup', wrap(() => setup.status()));
+    api.post('/setup/scan', wrap((req) => setup.scan(req.body?.seconds)));
+    api.post('/setup/speakers', wrap((req) => setup.add({ address: req.body?.address, name: req.body?.name })));
+    api.delete('/setup/speakers/:sid', wrap((req) => setup.remove(req.params.sid)));
+  }
 
   // ---- library ----
   api.get('/library/collections', wrap(() => library.collections()));

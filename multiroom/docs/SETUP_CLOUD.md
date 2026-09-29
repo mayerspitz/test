@@ -21,7 +21,29 @@ Phone ──https──► https://home-audio-kx2w.onrender.com        (Render, 
 
 The service is on Render (see `render.yaml`). Its only setting is `MULTIROOM_TOKEN`, which is the app password.
 
-## 2. The home Pi
+## 2. The home Pi: the automatic way (recommended)
+
+1. **Flash the microSD card** on your computer with [Raspberry Pi Imager](https://www.raspberrypi.com/software/): choose *Raspberry Pi 5* → *Raspberry Pi OS Lite (64-bit)*. In "Edit settings", set:
+   - hostname `audiohome`
+   - a username and password
+   - your **5 GHz** Wi-Fi (not the guest network)
+   - on the Services tab, turn SSH on
+2. **Plug everything in:** the SSD, the hub with the Bluetooth adapters on their short cables, then power. Wait 2 minutes.
+3. **Open a terminal on your computer** (Windows: PowerShell; Mac: Terminal), run `ssh <username>@audiohome.local`, then paste **one line**:
+   ```bash
+   curl -fsSL https://home-audio-kx2w.onrender.com/install.sh | bash
+   ```
+   It asks for the app password once, then does everything below by itself and restarts the Pi (about 10–15 minutes):
+   - finds and mounts the SSD; a new SSD is used as-is and nothing is erased
+   - applies the Samsung T7 and Bluetooth settings
+   - installs everything and connects to the app
+4. **Add speakers in the app:** Settings → **Add a speaker** → put the speaker in pairing mode → Search → tap it → name it. Repeat for each speaker. No commands needed.
+
+**Updating later:** run the same one line again.
+
+**Loading your ~100 GB of music:** in the app use Library → Add folder. For the first big copy it's faster to plug the SSD into your computer before step 2, copy each MP3 player's folder into a `library` folder on the SSD (e.g. `library/Kitchen player/…`), then plug it into the Pi. The app finds the songs automatically.
+
+## 2b. The home Pi: step by step (what the installer does)
 
 **Parts:** see [SHOPPING_LIST.md](SHOPPING_LIST.md). In short:
 - Raspberry Pi 5 (4 GB), or a Pi 4 4 GB, with its power supply and a case with a fan

@@ -18,6 +18,7 @@ import { MpvPlayer } from '../../agent/src/mpv.js';
 import { SimulatedBluetooth, SimulatedPlayer } from '../../agent/src/simulated.js';
 import { createLogger } from './log.js';
 import { createHub } from './server.js';
+import { SpeakerSetup } from './setup.js';
 
 const PASS_HEADERS = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'cache-control'];
 
@@ -116,17 +117,31 @@ export class HomeClient {
   }
 }
 
-export async function startHome(cfg, { log = createLogger(false) } = {}) {
+export async function startHome(cfg, { log = createLogger(false), configFile = null } = {}) {
   const dataDir = path.resolve(cfg.dataDir ?? '/srv/multiroom');
-  // The local hub only serves this Pi (library, media, YouTube); control lives in the cloud.
-  const local = await createHub({ dataDir, port: cfg.localPort ?? 8090, host: '127.0.0.1', token: '', quiet: true, ytdlpArgs: cfg.ytdlpArgs });
+  cfg.speakers ??= [];
+  // Speakers can be added/removed from the app (Settings → Speakers); the config file keeps them.
+  const setup = new SpeakerSetup({
+    getConfig: () => cfg,
+    saveConfig: (next) => {
+      if (configFile) {
+        const tmp = `${configFile}.tmp`;
+        fs.writeFileSync(tmp, `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
+        fs.renameSync(tmp, configFile);
+      }
+    },
+    log,
+    ...cfg.setupOptions,
+  });
+  // The local hub only serves this Pi (library, media, YouTube, speaker setup); control lives in the cloud.
+  const local = await createHub({ dataDir, port: cfg.localPort ?? 8090, host: '127.0.0.1', token: '', quiet: true, ytdlpArgs: cfg.ytdlpArgs, setup });
   const localBase = `http://127.0.0.1:${local.port}`;
   const client = new HomeClient({ cloud: cfg.cloud, token: cfg.token, localBase, stateFile: path.join(dataDir, 'cloud-state.json'), log, keepAliveMs: cfg.keepAliveMs });
   local.library.on('changed', () => client.send({ type: 'library-changed' }));
   client.start();
 
-  const agents = [];
-  for (const sp of cfg.speakers ?? []) {
+  const agents = new Map();
+  async function addAgent(sp) {
     const alog = createLogger(false);
     const player = sp.player?.type === 'simulated'
       ? new SimulatedPlayer()
@@ -143,18 +158,33 @@ export async function startHome(cfg, { log = createLogger(false) } = {}) {
       player: { audioDevice: 'auto', ...sp.player },
     };
     const agent = new Agent({ cfg: agentCfg, player, bluetooth, log: alog });
-    await agent.start();
-    agents.push(agent);
+    const entry = { agent, starting: agent.start() };
+    agents.set(sp.zone.id, entry); // registered before it finishes starting, so a quick remove still finds it
+    await entry.starting;
   }
-  log.info(`Home Pi running: ${agents.length} speaker(s), music in ${local.config.libraryDir}, cloud ${cfg.cloud}`);
+  for (const sp of cfg.speakers) await addAgent(sp);
+  setup.on('speaker-added', (sp) => addAgent(sp).catch((err) => log.error(`Could not start ${sp.zone.id}: ${err.message}`)));
+  setup.on('speaker-removed', async (id) => {
+    const entry = agents.get(id);
+    agents.delete(id);
+    if (entry) {
+      await entry.starting.catch(() => {});
+      await entry.agent.stop().catch(() => {});
+    }
+    client.send({ type: 'forget-zone', id }); // take it off the app too
+  });
+  log.info(`Home Pi running: ${agents.size} speaker(s), music in ${local.config.libraryDir}, cloud ${cfg.cloud}`);
 
   return {
     local,
     client,
-    agents,
+    setup,
+    get agents() {
+      return [...agents.values()].map((e) => e.agent);
+    },
     async stop() {
       client.close();
-      for (const a of agents) await a.stop().catch(() => {});
+      for (const e of agents.values()) await e.agent.stop().catch(() => {});
       await local.close();
     },
   };
@@ -165,7 +195,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const file = i >= 0 ? process.argv[i + 1] : process.env.MULTIROOM_HOME_CONFIG ?? '/etc/multiroom/home.json';
   const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (!cfg.cloud) throw new Error(`"cloud" (the cloud app address) is missing in ${file}`);
-  const home = await startHome(cfg);
+  const home = await startHome(cfg, { configFile: file });
   for (const sig of ['SIGINT', 'SIGTERM']) {
     process.on(sig, async () => {
       await home.stop();

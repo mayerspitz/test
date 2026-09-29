@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Home Audio: one-line setup for the home Raspberry Pi.
+#   curl -fsSL __CLOUD__/install.sh | bash
+# Asks for the app password once, downloads the software from the app, sets everything up.
+# Run it again any time to update.
+set -euo pipefail
+CLOUD="__CLOUD__"
+if [ -z "${PASSWORD:-}" ]; then
+  read -rsp "Home Audio password: " PASSWORD </dev/tty
+  echo
+fi
+DEST="$HOME/home-audio"
+echo "==> Downloading Home Audio from $CLOUD"
+rm -rf "$DEST.new"
+mkdir -p "$DEST.new"
+if ! curl -fsSL -H "Authorization: Bearer $PASSWORD" "$CLOUD/install/bundle.tgz" | tar xz -C "$DEST.new"; then
+  echo "Download failed — wrong password, or the app is still waking up (wait a minute and retry)." >&2
+  exit 1
+fi
+rm -rf "$DEST"
+mv "$DEST.new" "$DEST"
+cd "$DEST/multiroom"
+exec ./deploy/auto-setup.sh --cloud "$CLOUD" --password "$PASSWORD"

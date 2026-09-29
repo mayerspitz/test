@@ -50,6 +50,22 @@ _Last updated: 2026-09-29_
 - Storage (music size, disk free) in Settings
 - Bluetooth adapters can be named by their own address, so 10 identical USB adapters can't get mixed up after a reboot
 
+## Answers received (2026-09-29)
+
+- **P1:** the MP3 players connect over **Bluetooth**
+- **P2:** speaker list comes later; the design works with any classic-Bluetooth speaker
+- **P3:** the Pi sits mid-house; outdoors is wanted if cheap, so an optional 16 ft active USB extension (≈ $15) is on the list
+- **P4:** usually **3 at once**
+- **P5:** under 100 GB today, so 500 GB is plenty
+- **P6:** USA
+- **P7:** nothing owned yet (card reader added)
+- **P8:** **Pi 5**
+- **P9:** **as automatic as possible**
+  - one-line installer (`curl -fsSL <app>/install.sh | bash`)
+  - speakers added from the app (Settings → Add a speaker)
+- **P10:** separate 2.4/5 GHz networks plus guest: the Pi joins the main 5 GHz network
+- **P11:** the same song may play on two speakers; independent playback is fine, no sync needed
+
 ## Before buying: questions that can change the order (2026-09-29)
 
 | # | Question | What changes if the answer is… |
@@ -82,7 +98,7 @@ _Last updated: 2026-09-29_
 | Q11 | 6 or 10 speakers; central box or bridges | Main hardware decision | ✅ answered: one central Pi, capacity for 10 |
 | R1–R8 | Round-2 questions | | ✅ answered (round 3), except the speaker models, which come later |
 | R9 | Your current speakers (models, how many), whenever convenient | Pilot planning; the design already works with any speaker | ⏳ later |
-| R10 | Approve the parts list in [SHOPPING_LIST.md](SHOPPING_LIST.md). Pi 5 or Pi 4? | Ready to order the pilot | ⏳ waiting for you |
+| R10 | Parts list | | ✅ final: [SHOPPING_LIST.md](SHOPPING_LIST.md) (Pi 5) |
 | Q9 | Features you'd like next, if any (see the backlog below) | Scope of the next round | ⏳ waiting for you |
 
 ## To do: needs real hardware (first pilot: 1 hub + 1 bridge + 1 speaker)

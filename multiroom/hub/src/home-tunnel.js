@@ -47,6 +47,7 @@ export class HomeTunnel extends EventEmitter {
       this.lastSeen = Date.now();
       if (msg.type === 'hello') this.emit('hello', msg);
       else if (msg.type === 'library-changed') this.emit('library-changed');
+      else if (msg.type === 'forget-zone') this.emit('forget-zone', msg.id);
       else if (msg.type === 'request-failed') this.#fail(msg.rid, new HttpError(502, `Home Pi: ${msg.error}`));
     });
     ws.on('close', () => {

@@ -1,4 +1,6 @@
+import { spawn } from 'node:child_process';
 import crypto from 'node:crypto';
+import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -84,17 +86,32 @@ export async function createHub(overrides = {}) {
   app.disable('x-powered-by');
   app.set('etag', false);
   if (tunnel) {
+    // One-line home-Pi installer: `curl -fsSL https://<app>/install.sh | bash`.
+    // The script is public (no secrets); the software bundle needs the password.
+    app.get('/install.sh', (req, res) => {
+      const origin = `${req.headers['x-forwarded-proto']?.split(',')[0] || 'http'}://${req.headers.host}`;
+      const tmpl = fs.readFileSync(path.join(HUB_ROOT, 'public', 'install.sh.tmpl'), 'utf8');
+      res.type('text/x-shellscript').send(tmpl.replaceAll('__CLOUD__', origin));
+    });
+    app.get('/install/bundle.tgz', requireAuth, (req, res) => {
+      const root = path.resolve(HUB_ROOT, '..');
+      const tar = spawn('tar', ['czf', '-', '--exclude=node_modules', '--exclude=.git', '--exclude=multiroom/hub/data', '--exclude=multiroom/hub/demo-data', '-C', path.dirname(root), path.basename(root)]);
+      res.type('application/gzip');
+      tar.stdout.pipe(res);
+      tar.on('error', () => res.destroy());
+      res.on('close', () => tar.kill());
+    });
     // Before the JSON parser: these carry streams (uploads, audio) straight through.
     app.get('/home/tunnel/:rid/body', requireAuth, tunnel.handleBodyRequest);
     app.post('/home/tunnel/:rid/response', requireAuth, tunnel.handleResponse);
-    app.use(['/api/library', '/api/youtube', '/api/system', '/media'], requireAuth, tunnel.forward);
+    app.use(['/api/library', '/api/youtube', '/api/system', '/api/setup', '/media'], requireAuth, tunnel.forward);
   }
   app.use(express.json({ limit: '2mb' }));
 
   const homeStatus = () => (tunnel ? { online: tunnel.online, lastSeen: tunnel.lastSeen } : null);
   app.get('/api/health', (_req, res) =>
     res.json({ ok: true, version: VERSION, auth: Boolean(config.token), demo: Boolean(config.demo), home: homeStatus() }));
-  app.use('/api', requireAuth, createApi({ zones, library, youtube, playlists }));
+  app.use('/api', requireAuth, createApi({ zones, library, youtube, playlists, setup: overrides.setup }));
 
   // Media endpoints read by the bridges (and by the browser for previews).
   app.get('/media/tracks/:tid', requireAuth, (req, res, next) => {
@@ -239,6 +256,19 @@ export async function createHub(overrides = {}) {
   library.on('changed', () => broadcast({ type: 'library' }));
   playlists.on('changed', (id) => broadcast({ type: 'playlists', id }));
   tunnel?.on('online', () => broadcast({ type: 'home', home: homeStatus() }));
+  // A speaker removed on the Pi: forget it here once its player has disconnected.
+  tunnel?.on('forget-zone', (id) => {
+    let tries = 0;
+    const attempt = () => {
+      if (!zones.zones[id]) return;
+      try {
+        zones.remove(id);
+      } catch {
+        if (++tries < 20) setTimeout(attempt, 500).unref();
+      }
+    };
+    attempt();
+  });
   tunnel?.on('offline', () => broadcast({ type: 'home', home: homeStatus() }));
 
   // listen: false = don't open a port; a front server (site.js) hands requests to `server`.

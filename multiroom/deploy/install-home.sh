@@ -31,7 +31,7 @@ if ! findmnt -T "$DATA_DIR" >/dev/null 2>&1 || [ "$(findmnt -n -o TARGET -T "${D
   warn "$DATA_DIR is on the microSD card, not the SSD. Mount the SSD first if you want the music on it."
 fi
 sudo mkdir -p "$DATA_DIR/library"
-sudo chown -R "$USER": "$DATA_DIR"
+sudo chown -R "$USER": "$DATA_DIR" 2>/dev/null || true  # exFAT drives are already owned via mount options
 
 say "Enabling Bluetooth"
 sudo systemctl enable --now bluetooth
