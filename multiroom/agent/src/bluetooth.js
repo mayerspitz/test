@@ -146,6 +146,10 @@ export class BluetoothLink extends EventEmitter {
         this.backoff = 5000;
         this.sink = await this.#waitForSink();
         if (this.sink) await this.#pinSinkVolume(this.sink);
+      } else if (connected && !this.sink) {
+        // The audio output can appear late (or after an audio-service restart): keep looking.
+        this.sink = await this.#findSink();
+        if (this.sink) await this.#pinSinkVolume(this.sink);
       } else if (!connected && this.connected) {
         this.log.warn(`Speaker disconnected: ${this.name ?? this.address}`);
         this.connected = false;
@@ -175,19 +179,25 @@ export class BluetoothLink extends EventEmitter {
 
   // PipeWire needs a moment after the Bluetooth link comes up to create the sink.
   async #waitForSink() {
-    const mac = this.address.replace(/:/g, '_');
     for (let i = 0; i < 20; i++) {
-      try {
-        const out = await run('pactl', ['list', 'short', 'sinks']);
-        const line = out.split('\n').find((l) => l.includes(`bluez_output.${mac}`) || l.includes(`bluez_sink.${mac}`));
-        if (line) return line.split('\t')[1];
-      } catch (err) {
-        if (err.code === 'ENOENT') return null; // no pactl: not a PipeWire/Pulse setup, use the default device
-      }
+      const sink = await this.#findSink();
+      if (sink || this.noPactl) return sink;
       await new Promise((r) => setTimeout(r, 500));
     }
-    this.log.warn('Speaker connected but no audio sink appeared (is PipeWire running for this user?)');
+    this.log.warn('Speaker connected but no audio sink appeared yet (is PipeWire running for this user?) — will keep checking');
     return null;
+  }
+
+  async #findSink() {
+    const mac = this.address.replace(/:/g, '_');
+    try {
+      const out = await run('pactl', ['list', 'short', 'sinks']);
+      const line = out.split('\n').find((l) => l.includes(`bluez_output.${mac}`) || l.includes(`bluez_sink.${mac}`));
+      return line ? line.split('\t')[1] : null;
+    } catch (err) {
+      if (err.code === 'ENOENT') this.noPactl = true; // no pactl: not a PipeWire/Pulse setup, use the default device
+      return null;
+    }
   }
 
   async #pinSinkVolume(sink) {

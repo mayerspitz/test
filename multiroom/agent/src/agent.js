@@ -34,7 +34,7 @@ export class Agent {
     this.bt?.start();
     this.link.connect();
     this.log.info(`Bridge for "${this.cfg.zone.name}" started — hub ${this.cfg.hub}, player ${this.player.type}` +
-      (this.bt ? `, speaker ${this.cfg.bluetooth.speaker ?? 'simulated'} via ${this.cfg.bluetooth.adapter}` : ', default audio output'));
+      (this.bt ? `, speaker ${this.cfg.bluetooth.speaker ?? 'simulated'} via ${this.cfg.bluetooth.adapter ?? 'simulated adapter'}` : ', default audio output'));
   }
 
   async stop() {
@@ -107,8 +107,11 @@ export class Agent {
 
   // Playback only runs while the hub says "play" AND the speaker is connected —
   // otherwise the music would continue on the bridge's built-in output or be lost.
+  // With several speakers on one computer (the home Pi), also wait until this speaker's own
+  // audio output exists — otherwise the music would come out of another speaker.
   #speakerBlocks() {
-    return Boolean(this.bt) && this.cfg.bluetooth?.pauseWhenDisconnected !== false && !this.bt.connected;
+    if (!this.bt || this.cfg.bluetooth?.pauseWhenDisconnected === false) return false;
+    return !this.bt.connected || (Boolean(this.cfg.bluetooth?.requireSink) && !this.bt.sink);
   }
 
   #applyPause() {

@@ -102,3 +102,10 @@ test('pairing failure gives a clear message', async () => {
   assert.equal(r.status, 502);
   assert.match(r.data.error, /pairing mode/);
 });
+
+test('the system check runs on the Pi and its report reaches the app', async () => {
+  const r = await call('GET', '/api/setup/check');
+  assert.equal(r.status, 200);
+  assert.match(r.data.report, /Home Audio system check/);
+  assert.match(r.data.report, /Node\.js/);
+});

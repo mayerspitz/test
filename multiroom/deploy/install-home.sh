@@ -83,6 +83,7 @@ systemctl --user restart multiroom-home
 cat <<DONE
 
   Home Pi installed and connecting to $CLOUD
+    Check it any time: ./deploy/doctor.sh   (or in the app: Settings → Run system check)
     Music folder: $DATA_DIR/library   (or upload from the app)
     Logs:         journalctl --user -u multiroom-home -f
   Next: pair and add each speaker, e.g.

@@ -215,3 +215,7 @@ input[type=range]:disabled { opacity: 0.4; }
 @media (max-width: 420px) { .segmented button svg { display: none; } }
 .row .actions .icon-btn { width: 38px; height: 38px; }
 .card.pane { padding: 14px; }
+.check { font-size: 14px; padding: 2px 0; }
+.check.ok { color: var(--ok); }
+.check.warn { color: var(--warn); }
+.check.bad { color: var(--bad); font-weight: 600; }

@@ -97,7 +97,7 @@ _Last updated: 2026-09-29_
 | Q10 | Demo + production on one Render app | Architecture | ✅ answered: fully cloud. Domain and plan are still open (R2, R3) |
 | Q11 | 6 or 10 speakers; central box or bridges | Main hardware decision | ✅ answered: one central Pi, capacity for 10 |
 | R1–R8 | Round-2 questions | | ✅ answered (round 3), except the speaker models, which come later |
-| R9 | Your current speakers (models, how many), whenever convenient | Pilot planning; the design already works with any speaker | ⏳ later |
+| R9 | Your speakers | | Partly answered: Sony stereo receiver (likely STR-DH190; confirm the model on its label) + BolaButty X-GO C27-C. See [SPEAKERS.md](SPEAKERS.md). More to come |
 | R10 | Parts list | | ✅ final: [SHOPPING_LIST.md](SHOPPING_LIST.md) (Pi 5) |
 | Q9 | Features you'd like next, if any (see the backlog below) | Scope of the next round | ⏳ waiting for you |
 

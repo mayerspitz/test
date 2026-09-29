@@ -1533,8 +1533,26 @@ async function renderSpeakerSetup(el) {
         }
       }))],
     }))),
-    h('div', null, h('button', { class: 'btn primary', disabled: !st.free, onclick: () => openAddSpeaker(refresh) }, icon('plus'), 'Add a speaker')),
+    h('div', { class: 'toolbar', style: 'margin:0' },
+      h('button', { class: 'btn primary', disabled: !st.free, onclick: () => openAddSpeaker(refresh) }, icon('plus'), 'Add a speaker'),
+      h('button', { class: 'btn', onclick: openSystemCheck }, icon('refresh'), 'Run system check'),
+    ),
   );
+}
+
+// Runs the Pi's system check (deploy/doctor.sh) and shows the report.
+async function openSystemCheck() {
+  const s = openSheet({ title: 'System check', tall: true });
+  s.body.append(spinner(), h('p', { class: 'hint', style: 'text-align:center' }, 'Checking the Pi… (up to a minute)'));
+  try {
+    const r = await api('/setup/check');
+    s.body.replaceChildren(h('div', { class: 'pane' }, ...r.report.split('\n').map((line) => {
+      const cls = line.startsWith('✗') ? 'bad' : line.startsWith('!') ? 'warn' : line.startsWith('✓') ? 'ok' : '';
+      return h('div', { class: `check ${cls}`, dir: 'auto' }, line);
+    })));
+  } catch (err) {
+    s.body.replaceChildren(h('p', { class: 'hint' }, err.message));
+  }
 }
 
 function openAddSpeaker(onDone) {

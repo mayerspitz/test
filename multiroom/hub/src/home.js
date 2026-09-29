@@ -119,6 +119,7 @@ export class HomeClient {
 
 export async function startHome(cfg, { log = createLogger(false), configFile = null } = {}) {
   const dataDir = path.resolve(cfg.dataDir ?? '/srv/multiroom');
+  await waitForMount(dataDir, log);
   cfg.speakers ??= [];
   // Speakers can be added/removed from the app (Settings → Speakers); the config file keeps them.
   const setup = new SpeakerSetup({
@@ -131,6 +132,7 @@ export async function startHome(cfg, { log = createLogger(false), configFile = n
       }
     },
     log,
+    configFile,
     ...cfg.setupOptions,
   });
   // The local hub only serves this Pi (library, media, YouTube, speaker setup); control lives in the cloud.
@@ -154,7 +156,7 @@ export async function startHome(cfg, { log = createLogger(false), configFile = n
       token: cfg.token,
       mediaBase: localBase,
       zone: sp.zone,
-      bluetooth: sp.bluetooth ? { pauseWhenDisconnected: true, ...sp.bluetooth } : null,
+      bluetooth: sp.bluetooth ? { pauseWhenDisconnected: true, requireSink: sp.bluetooth.type !== 'simulated', ...sp.bluetooth } : null,
       player: { audioDevice: 'auto', ...sp.player },
     };
     const agent = new Agent({ cfg: agentCfg, player, bluetooth, log: alog });
@@ -188,6 +190,31 @@ export async function startHome(cfg, { log = createLogger(false), configFile = n
       await local.close();
     },
   };
+}
+
+// At boot the music SSD may still be mounting. If the music folder is an /etc/fstab mount
+// point, wait for it (up to 2 minutes) instead of writing to the microSD underneath it.
+export async function waitForMount(dir, log, { fstab = '/etc/fstab', mounts = '/proc/mounts', timeoutMs = 120_000 } = {}) {
+  const listed = (file) => {
+    try {
+      return fs.readFileSync(file, 'utf8').split('\n').some((l) => !l.trim().startsWith('#') && l.split(/\s+/)[1] === dir);
+    } catch {
+      return false;
+    }
+  };
+  if (!listed(fstab)) return true;
+  const end = Date.now() + timeoutMs;
+  let warned = false;
+  while (!listed(mounts)) {
+    if (Date.now() > end) {
+      log.error(`The music drive for ${dir} is not mounted (is the SSD plugged in?). Starting without it.`);
+      return false;
+    }
+    if (!warned) log.info(`Waiting for the music drive at ${dir}…`);
+    warned = true;
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  return true;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

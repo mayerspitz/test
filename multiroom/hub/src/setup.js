@@ -10,8 +10,9 @@ const AUDIO_SINK_UUID = '0000110b-0000-1000-8000-00805f9b34fb';
 const MAC_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i;
 
 export class SpeakerSetup extends EventEmitter {
-  constructor({ getConfig, saveConfig, log, scanSeconds = 12, pairWaitMs = 10_000 }) {
+  constructor({ getConfig, saveConfig, log, scanSeconds = 12, pairWaitMs = 10_000, configFile = null }) {
     super();
+    this.configFile = configFile;
     this.getConfig = getConfig;
     this.saveConfig = saveConfig;
     this.log = log;
@@ -46,6 +47,10 @@ export class SpeakerSetup extends EventEmitter {
       const owner = this.speakers.find((s) => [address, name].includes(String(s.bluetooth?.adapter ?? '').toUpperCase()) || s.bluetooth?.adapter === name);
       out.push({ name, address, powered: Boolean(val(a.Powered)), usb: isUsb(name), speaker: owner?.zone.id ?? null });
     }
+    // The Pi's built-in radio shares its antenna with Wi-Fi: when USB adapters are present,
+    // never use it for a speaker (even if the "disable-bt" setting didn't take effect).
+    const anyUsb = out.some((a) => a.usb === true);
+    for (const a of out) a.usable = !(anyUsb && a.usb === false);
     return out.sort((x, y) => x.name.localeCompare(y.name, undefined, { numeric: true }));
   }
 
@@ -53,7 +58,7 @@ export class SpeakerSetup extends EventEmitter {
     const adapters = await this.adapters();
     return {
       adapters,
-      free: adapters.filter((a) => !a.speaker).length,
+      free: adapters.filter((a) => a.usable && !a.speaker).length,
       speakers: this.speakers.map((s) => ({ id: s.zone.id, name: s.zone.name, speaker: s.bluetooth?.speaker ?? null, adapter: s.bluetooth?.adapter ?? null })),
     };
   }
@@ -62,7 +67,7 @@ export class SpeakerSetup extends EventEmitter {
   async scan(seconds = this.scanSeconds) {
     return this.#exclusive('scan', async () => {
       const adapters = await this.adapters();
-      const use = adapters.filter((a) => !a.speaker);
+      const use = adapters.filter((a) => a.usable && !a.speaker);
       if (!use.length) throw new HttpError(409, 'Every Bluetooth adapter already has a speaker. Plug in another USB Bluetooth adapter first.');
       for (const a of use) {
         await busctl(['call', 'org.bluez', `/org/bluez/${a.name}`, 'org.bluez.Adapter1', 'SetDiscoveryFilter', 'a{sv}', '1', 'Transport', 's', 'bredr']).catch(() => {});
@@ -110,7 +115,7 @@ export class SpeakerSetup extends EventEmitter {
     if (!MAC_RE.test(mac)) throw badRequest('Pick a speaker from the scan');
     if (this.speakers.some((s) => s.bluetooth?.speaker?.toUpperCase() === mac)) throw new HttpError(409, 'That speaker is already set up');
     return this.#exclusive('pair', async () => {
-      const adapters = (await this.adapters()).filter((a) => !a.speaker);
+      const adapters = (await this.adapters()).filter((a) => a.usable && !a.speaker);
       if (!adapters.length) throw new HttpError(409, 'Every Bluetooth adapter already has a speaker. Plug in another USB Bluetooth adapter first.');
       // Prefer the free adapter that already knows the device (it saw it during the scan).
       const objs = await this.#objects();
@@ -129,6 +134,16 @@ export class SpeakerSetup extends EventEmitter {
       this.saveConfig(cfg);
       this.emit('speaker-added', entry);
       return { id: entry.zone.id, name: label, adapter: adapter.address };
+    });
+  }
+
+  // Runs deploy/doctor.sh (the system check) and returns its report.
+  check() {
+    return new Promise((resolve) => {
+      const script = new URL('../../deploy/doctor.sh', import.meta.url).pathname;
+      execFile('bash', [script], { timeout: 180_000, env: { ...process.env, HOME_AUDIO_CONFIG: this.configFile ?? '' } }, (err, stdout, stderr) => {
+        resolve({ ok: !err, report: `${stdout}${stderr ? `\n${stderr}` : ''}`.trim() });
+      });
     });
   }
 

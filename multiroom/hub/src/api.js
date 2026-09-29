@@ -90,6 +90,7 @@ export function createApi({ zones, library, youtube, playlists, setup }) {
   // ---- speaker setup (home Pi only): adapters, scan, pair, remove ----
   if (setup) {
     api.get('/setup', wrap(() => setup.status()));
+    api.get('/setup/check', wrap(() => setup.check()));
     api.post('/setup/scan', wrap((req) => setup.scan(req.body?.seconds)));
     api.post('/setup/speakers', wrap((req) => setup.add({ address: req.body?.address, name: req.body?.name })));
     api.delete('/setup/speakers/:sid', wrap((req) => setup.remove(req.params.sid)));
