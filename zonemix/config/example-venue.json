@@ -1,0 +1,132 @@
+{
+  "name": "Example wedding hall",
+  "mixer": { "type": "x32" },
+  "groups": ["speech", "vocals", "band", "playback"],
+  "channels": [
+    { "id": "speech-1", "name": "Speech mic 1 (wireless)", "mixerChannel": 1, "group": "speech", "nominalDbfs": -24 },
+    { "id": "speech-2", "name": "Speech mic 2 (wireless)", "mixerChannel": 2, "group": "speech", "nominalDbfs": -24 },
+    { "id": "vox-lead", "name": "Lead vocal", "mixerChannel": 3, "group": "vocals", "nominalDbfs": -20 },
+    { "id": "vox-bv", "name": "Backing vocal", "mixerChannel": 4, "group": "vocals", "nominalDbfs": -24 },
+    { "id": "keys", "name": "Keys", "mixerChannel": 5, "group": "band", "nominalDbfs": -22 },
+    { "id": "guitar", "name": "Guitar", "mixerChannel": 6, "group": "band", "nominalDbfs": -22 },
+    { "id": "bass", "name": "Bass", "mixerChannel": 7, "group": "band", "nominalDbfs": -20 },
+    { "id": "drums", "name": "Drums (sub-group)", "mixerChannel": 8, "group": "band", "nominalDbfs": -18 },
+    { "id": "play-l", "name": "DJ / playback L", "mixerChannel": 9, "group": "playback", "nominalDbfs": -20 },
+    { "id": "play-r", "name": "DJ / playback R", "mixerChannel": 10, "group": "playback", "nominalDbfs": -20 }
+  ],
+  "zones": [
+    {
+      "id": "dance",
+      "name": "Dance floor (main PA)",
+      "bus": 1,
+      "sensorId": "s-dance",
+      "mode": "limit-only",
+      "gainRangeDb": [-30, 0],
+      "maxLaeq1sDb": 104,
+      "leqLimit": { "windowMin": 15, "maxDb": 100 },
+      "speakerPos": [0, 0, 3],
+      "listenPos": [0, 6, 1.6]
+    },
+    {
+      "id": "dining-l",
+      "name": "Dining left",
+      "bus": 2,
+      "sensorId": "s-dining-l",
+      "gainRangeDb": [-40, 0],
+      "maxLaeq1sDb": 90,
+      "ambient": { "thresholdDb": 58, "slope": 0.5, "maxBoostDb": 5 },
+      "duck": { "groups": ["vocals", "band", "playback"], "depthDb": 12, "attackS": 0.5, "releaseS": 3 },
+      "speakerPos": [-9, 12, 2.5],
+      "listenPos": [-9, 15, 1.2]
+    },
+    {
+      "id": "dining-r",
+      "name": "Dining right",
+      "bus": 3,
+      "sensorId": "s-dining-r",
+      "gainRangeDb": [-40, 0],
+      "maxLaeq1sDb": 90,
+      "ambient": { "thresholdDb": 58, "slope": 0.5, "maxBoostDb": 5 },
+      "duck": { "groups": ["vocals", "band", "playback"], "depthDb": 12, "attackS": 0.5, "releaseS": 3 },
+      "speakerPos": [9, 12, 2.5],
+      "listenPos": [9, 15, 1.2]
+    },
+    {
+      "id": "bar",
+      "name": "Bar & lounge",
+      "bus": 4,
+      "sensorId": "s-bar",
+      "gainRangeDb": [-40, 0],
+      "maxLaeq1sDb": 92,
+      "ambient": { "thresholdDb": 60, "slope": 0.6, "maxBoostDb": 6 },
+      "duck": { "groups": ["vocals", "band", "playback"], "depthDb": 8, "attackS": 0.5, "releaseS": 3 },
+      "speakerPos": [14, 24, 2.5],
+      "listenPos": [14, 27, 1.2]
+    },
+    {
+      "id": "foyer",
+      "name": "Foyer & terrace",
+      "bus": 5,
+      "sensorId": "s-foyer",
+      "gainRangeDb": [-40, 0],
+      "maxLaeq1sDb": 85,
+      "ambient": { "thresholdDb": 55, "slope": 0.4, "maxBoostDb": 4 },
+      "duck": { "groups": ["vocals", "band", "playback"], "depthDb": 10, "attackS": 0.5, "releaseS": 3 },
+      "speakerPos": [-6, 32, 2.5],
+      "listenPos": [-6, 35, 1.2]
+    }
+  ],
+  "scenes": {
+    "reception": {
+      "fadeS": 5,
+      "zones": {
+        "dance": { "gainDb": -20, "mix": { "playback": 0, "speech": 0 } },
+        "dining-l": { "targetDb": 68, "mix": { "playback": 0, "speech": 0 } },
+        "dining-r": { "targetDb": 68, "mix": { "playback": 0, "speech": 0 } },
+        "bar": { "targetDb": 70, "mix": { "playback": 0, "speech": 0 } },
+        "foyer": { "targetDb": 66, "mix": { "playback": 0, "speech": 0 } }
+      }
+    },
+    "dinner": {
+      "fadeS": 8,
+      "zones": {
+        "dance": { "gainDb": -14, "mix": { "speech": 0, "vocals": 0, "band": 0, "playback": -6 } },
+        "dining-l": { "targetDb": 72, "mix": { "speech": 0, "vocals": 0, "band": -4, "playback": -6 } },
+        "dining-r": { "targetDb": 72, "mix": { "speech": 0, "vocals": 0, "band": -4, "playback": -6 } },
+        "bar": { "targetDb": 74, "mix": { "speech": 0, "vocals": 0, "band": -2, "playback": -4 } },
+        "foyer": { "targetDb": 66, "mix": { "speech": 0, "vocals": -3, "band": -6, "playback": -6 } }
+      }
+    },
+    "speeches": {
+      "fadeS": 3,
+      "zones": {
+        "dance": { "gainDb": -10, "mix": { "speech": 0, "playback": -20 } },
+        "dining-l": { "targetDb": 76, "mix": { "speech": 0, "playback": -20 } },
+        "dining-r": { "targetDb": 76, "mix": { "speech": 0, "playback": -20 } },
+        "bar": { "targetDb": 76, "mix": { "speech": 0, "playback": -20 } },
+        "foyer": { "targetDb": 74, "mix": { "speech": 0 } }
+      }
+    },
+    "dance": {
+      "fadeS": 10,
+      "zones": {
+        "dance": { "gainDb": -4, "mix": { "speech": 0, "vocals": 0, "band": 0, "playback": 0 } },
+        "dining-l": { "targetDb": 80, "mix": { "speech": 0, "vocals": 0, "band": 0, "playback": 0 } },
+        "dining-r": { "targetDb": 80, "mix": { "speech": 0, "vocals": 0, "band": 0, "playback": 0 } },
+        "bar": { "targetDb": 80, "mix": { "speech": 0, "vocals": 0, "band": 0, "playback": 0 } },
+        "foyer": { "targetDb": 72, "mix": { "speech": 0, "vocals": 0, "band": -3, "playback": 0 } }
+      }
+    }
+  },
+  "calibration": {
+    "note": "Level each sensor hears for 0 dBFS on a zone bus at 0 dB gain. Example values; a real venue gets these from the automatic calibration.",
+    "couplingDb": {
+      "s-dance": { "dance": 112, "dining-l": 86, "dining-r": 86, "bar": 80, "foyer": 60 },
+      "s-dining-l": { "dance": 94, "dining-l": 104, "dining-r": 88, "bar": 80, "foyer": 60 },
+      "s-dining-r": { "dance": 94, "dining-l": 88, "dining-r": 104, "bar": 86, "foyer": 62 },
+      "s-bar": { "dance": 88, "dining-l": 78, "dining-r": 86, "bar": 102, "foyer": 74 },
+      "s-foyer": { "dance": 72, "dining-l": 62, "dining-r": 66, "bar": 76, "foyer": 100 }
+    }
+  },
+  "geometry": { "mainZone": "dance", "temperatureC": 22, "precedenceMs": 10 }
+}

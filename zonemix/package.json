@@ -1,0 +1,14 @@
+{
+  "name": "zonemix",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Automatic per-zone live sound mixing, driven by level sensors in each listening area",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\"",
+    "simulate": "node src/sim/run.js"
+  }
+}
