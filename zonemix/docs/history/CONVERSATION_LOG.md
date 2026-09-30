@@ -17,3 +17,9 @@ Every user message word for word (secrets redacted), with a one-line summary of 
 - Built and tested the core engine, mixer driver, sensor receiver and simulator: 52 tests.
 - Reported that no ready-made product does the whole job, and listed the closest ready-made setup (ALTERNATIVES).
 - Asked questions P1–P8.
+
+**User:**
+
+> From "How I'd design it" and on ,.you didn't refer to alternatives and/or off the shelf available options, correct? All back to our custom system. Correct.?
+
+**Reply (summary):** Confirmed. Everything from the design section on describes the custom system, which is built from off-the-shelf hardware plus custom software and a simple sensor assembly. The one exception is P8, which asks the user to choose between the ready-made route and the custom build.
